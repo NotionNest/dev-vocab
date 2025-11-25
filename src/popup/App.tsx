@@ -1,7 +1,7 @@
 import { ThemeContext, useThemeProvider } from '@/hooks/useTheme'
-import { Moon, Settings, Sun } from 'lucide-react'
-import { ChartContainer, ChartConfig } from '@/components/ui/chart'
-import { BarChart, Bar } from 'recharts'
+import { Book, Moon, Settings, Sun } from 'lucide-react'
+import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import { Bar, BarChart, CartesianGrid, XAxis, Cell } from 'recharts'
 
 export default function App() {
   const themeValue = useThemeProvider()
@@ -13,65 +13,106 @@ export default function App() {
   }
 
   const chartData = [
-    { month: 'January', desktop: 186, mobile: 80 },
-    { month: 'February', desktop: 305, mobile: 200 },
-    { month: 'March', desktop: 237, mobile: 120 },
-    { month: 'April', desktop: 73, mobile: 190 },
-    { month: 'May', desktop: 209, mobile: 130 },
-    { month: 'June', desktop: 214, mobile: 140 },
+    { label: '总词汇', value: 100, fill: '#94a3b8' }, // 灰色
+    { label: '学习中', value: 80, fill: '#fbbf24' }, // 黄色
+    { label: '已掌握', value: 60, fill: '#10b981' }, // 绿色
+    { label: '待复习', value: 40, fill: '#ef4444' }, // 红色
   ]
-
   const chartConfig = {
-    desktop: {
-      label: 'Desktop',
-      color: '#2563eb',
-    },
-    mobile: {
-      label: 'Mobile',
-      color: '#60a5fa',
+    value: {
+      label: '词汇量',
+      color: '#94a3b8',
     },
   } satisfies ChartConfig
+
+  const progressData = [
+    {
+      label: '总词汇量',
+      value: 100,
+      color: 'gray',
+    },
+    {
+      label: '学习中',
+      value: 100,
+      color: 'yellow',
+    },
+    {
+      label: '已掌握',
+      value: 100,
+      color: 'emerald',
+    },
+    {
+      label: '待复习',
+      value: 100,
+      color: 'red',
+    },
+  ]
 
   return (
     <ThemeContext.Provider value={themeValue}>
       <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 px-4 pb-4">
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-2 rounded-md">
           <button
             onClick={openOptionsPage}
             className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Open Settings"
           >
-            <Settings size={20} />
+            <Settings size={16} />
           </button>
           <button
             onClick={toggleTheme}
             className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             title="Toggle Theme"
           >
-            {isDark ? <Sun size={20} /> : <Moon size={20} />}
+            {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </button>
         </div>
 
-        <div className="w-60">
+        <div className="w-72">
           <div>
-            <div className="text-lg font-medium">Your Progress</div>
+            <div className="text-base mb-2 font-medium">进度</div>
             <div className="grid grid-cols-2 gap-2">
-              <div className="border rounded-md p-3 bg-panel">1</div>
-              <div className="border rounded-md p-3 bg-panel">2</div>
-              <div className="border rounded-md p-3 bg-panel">3</div>
-              <div className="border rounded-md p-3 bg-panel">4</div>
+              {progressData.map(item => (
+                <div
+                  className="border rounded-md p-3 bg-panel"
+                  key={item.label}
+                >
+                  <div
+                    className={`flex text-${item.color}-500 dark:text-${item.color}-400 items-center gap-2 text-xs`}
+                  >
+                    <Book size={14} />
+                    {item.label}
+                  </div>
+                  <div className="text-2xl font-medium">{item.value}</div>
+                </div>
+              ))}
             </div>
           </div>
 
           <div className="mt-4">
-            <div className="text-sm font-medium mb-2">Weekly Stats</div>
+            <div className="text-sm font-medium mb-2">分布情况</div>
             <ChartContainer
               config={chartConfig}
-              className="min-h-[200px] w-full"
+              className="min-h-[150px] w-full"
             >
               <BarChart accessibilityLayer data={chartData}>
-                <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-                <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="label"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  tickFormatter={value => value.slice(0, 3)}
+                />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent hideLabel />}
+                />
+                <Bar dataKey="value" radius={4}>
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </div>

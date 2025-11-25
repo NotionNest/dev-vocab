@@ -1,6 +1,32 @@
 import { useEffect, useState } from 'react'
-import { Globe } from 'lucide-react'
+import { Globe, Plus } from 'lucide-react'
 import SettingCard from '../components/SettingCard'
+import SortableServiceCard from '../components/SortableServiceCard'
+import ServiceConfigDialog from '../components/ServiceConfigDialog'
+import { Button } from '@/components/ui/button'
+import { TranslationService, testTranslationService } from '@/lib/utils/translate'
+import {
+  getTranslationServices,
+  updateTranslationService,
+  addCustomTranslationService,
+  deleteTranslationService,
+  reorderTranslationServices,
+} from '@/lib/utils/storage'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable'
 
 const LANGUAGES = [
   { code: 'zh-CN', name: '简体中文', nativeName: '简体中文' },
@@ -25,6 +51,21 @@ const STORAGE_KEY = 'targetLanguage'
 export default function AITranslation() {
   const [selectedLanguage, setSelectedLanguage] = useState('zh-CN')
   const [isLoading, setIsLoading] = useState(true)
+  
+  // 翻译服务管理
+  const [services, setServices] = useState<TranslationService[]>([])
+  const [isLoadingServices, setIsLoadingServices] = useState(true)
+  const [configDialogOpen, setConfigDialogOpen] = useState(false)
+  const [selectedService, setSelectedService] = useState<TranslationService | null>(null)
+  const [_testingServiceId, setTestingServiceId] = useState<string | null>(null)
+
+  // 拖拽传感器配置
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
 
   // 从 Chrome Storage 读取语言设置
   useEffect(() => {
@@ -57,6 +98,23 @@ export default function AITranslation() {
     }
   }, [selectedLanguage])
 
+  // 加载翻译服务列表
+  useEffect(() => {
+    loadServices()
+  }, [])
+
+  const loadServices = async () => {
+    setIsLoadingServices(true)
+    try {
+      const loadedServices = await getTranslationServices()
+      setServices(loadedServices)
+    } catch (error) {
+      console.error('加载服务失败:', error)
+    } finally {
+      setIsLoadingServices(false)
+    }
+  }
+
   const handleLanguageChange = (code: string) => {
     setSelectedLanguage(code)
     chrome.storage.local.set({ [STORAGE_KEY]: code })
@@ -64,8 +122,127 @@ export default function AITranslation() {
 
   const selectedLang = LANGUAGES.find(lang => lang.code === selectedLanguage)
 
+  // 处理服务启用/禁用
+  const handleToggleService = async (id: string, enabled: boolean) => {
+    try {
+      await updateTranslationService(id, { enabled })
+      await loadServices()
+    } catch (error) {
+      console.error('切换服务状态失败:', error)
+    }
+  }
+
+  // 打开配置对话框
+  const handleEditService = (service: TranslationService) => {
+    setSelectedService(service)
+    setConfigDialogOpen(true)
+  }
+
+  // 打开添加服务对话框
+  const handleAddService = () => {
+    setSelectedService(null)
+    setConfigDialogOpen(true)
+  }
+
+  // 保存服务配置
+  const handleSaveConfig = async (serviceId: string, config: any) => {
+    try {
+      // 检查配置是否完整
+      const service = services.find(s => s.id === serviceId)
+      if (!service) return
+
+      const configured = checkServiceConfigured(config, service)
+      
+      await updateTranslationService(serviceId, { 
+        config,
+        configured,
+      })
+      await loadServices()
+    } catch (error) {
+      console.error('保存配置失败:', error)
+      throw error
+    }
+  }
+
+  // 检查服务配置是否完整
+  const checkServiceConfigured = (config: any, service: TranslationService): boolean => {
+    // Google Translate 不需要配置
+    if (service.providerId === 'google') return true
+    
+    // 百度和有道需要 appId 和 appSecret
+    if (service.providerId === 'baidu' || service.providerId === 'youdao') {
+      return Boolean(config.appId && config.appSecret)
+    }
+    
+    // 其他服务需要 apiKey
+    return Boolean(config.apiKey)
+  }
+
+  // 添加自定义服务
+  const handleAddCustomService = async (service: Omit<TranslationService, 'id' | 'isBuiltIn'>) => {
+    try {
+      await addCustomTranslationService(service)
+      await loadServices()
+    } catch (error) {
+      console.error('添加服务失败:', error)
+      throw error
+    }
+  }
+
+  // 删除服务
+  const handleDeleteService = async (id: string) => {
+    if (!confirm('确定要删除这个服务吗？')) return
+    
+    try {
+      await deleteTranslationService(id)
+      await loadServices()
+    } catch (error) {
+      console.error('删除服务失败:', error)
+    }
+  }
+
+  // 测试服务
+  const handleTestService = async (service: TranslationService) => {
+    setTestingServiceId(service.id)
+    try {
+      const result = await testTranslationService(service, selectedLanguage)
+      if (result.success) {
+        alert(`测试成功！\n\n测试文本: Hello\n翻译结果: ${result.result}`)
+      } else {
+        alert(`测试失败：${result.message}`)
+      }
+    } catch (error) {
+      alert(`测试失败：${(error as Error).message}`)
+    } finally {
+      setTestingServiceId(null)
+    }
+  }
+
+  // 处理拖拽结束
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = services.findIndex((s) => s.id === active.id)
+      const newIndex = services.findIndex((s) => s.id === over.id)
+
+      const reordered = arrayMove(services, oldIndex, newIndex)
+      setServices(reordered)
+
+      // 保存新的顺序
+      try {
+        await reorderTranslationServices(reordered)
+      } catch (error) {
+        console.error('保存排序失败:', error)
+        // 失败时回滚
+        await loadServices()
+      }
+    }
+  }
+
   return (
-    <div>
+    <div className="space-y-6">
+      {/* 目标语言选择 */}
       <SettingCard title="目标语言">
         <div className="flex items-start gap-3">
           <div className="p-2 bg-emerald-100 dark:bg-emerald-900 rounded-md text-emerald-700 dark:text-emerald-400 mt-1">
@@ -103,6 +280,73 @@ export default function AITranslation() {
           </div>
         </div>
       </SettingCard>
+
+      {/* 翻译服务配置 */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            翻译服务提供商
+          </div>
+          <Button
+            size="sm"
+            onClick={handleAddService}
+            disabled={isLoadingServices}
+          >
+            <Plus size={14} />
+            添加自定义服务
+          </Button>
+        </div>
+
+        {isLoadingServices ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            加载中...
+          </div>
+        ) : services.length === 0 ? (
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            没有可用的翻译服务
+          </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={services.map(s => s.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {services.map((service) => (
+                  <SortableServiceCard
+                    key={service.id}
+                    service={service}
+                    onToggle={handleToggleService}
+                    onEdit={handleEditService}
+                    onDelete={!service.isBuiltIn ? handleDeleteService : undefined}
+                    onTest={handleTestService}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
+        )}
+
+        {/* 提示信息 */}
+        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+          <p className="text-xs text-blue-700 dark:text-blue-300">
+            💡 提示：翻译时会按优先级依次尝试已启用的服务，直到翻译成功。拖拽服务卡片可以调整优先级顺序。
+          </p>
+        </div>
+      </div>
+
+      {/* 配置对话框 */}
+      <ServiceConfigDialog
+        open={configDialogOpen}
+        onOpenChange={setConfigDialogOpen}
+        service={selectedService}
+        onSave={handleSaveConfig}
+        onAdd={handleAddCustomService}
+      />
     </div>
   )
 }

@@ -18,7 +18,7 @@ export default function ReviewModal2() {
     <>
       <div onClick={() => setShowModal(true)} className="flex items-center justify-center cursor-pointer mx-4 mt-4 border rounded-sm border-gray-200 dark:border-gray-700 p-2 text-center text-blue-400 dark:text-blue-500 font-semibold hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
         <Brain size={16} />
-        <p>Start Review Session (2 Due)</p>
+        <p>开始复习（还有 2 个待复习）</p>
       </div>
 
       {showModal && (

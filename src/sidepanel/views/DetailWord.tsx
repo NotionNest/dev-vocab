@@ -169,16 +169,16 @@ export default function DetailWord() {
           <div className="flex flex-1 items-center justify-between gap-2">
             <button className="cursor-pointer w-full rounded-md py-2 border border-blue-500 dark:border-blue-600 bg-blue-500/10 dark:bg-blue-600/20 text-blue-500 dark:text-blue-400 flex items-center justify-center gap-2 hover:bg-blue-500/20 dark:hover:bg-blue-600/30 transition-colors">
               <Clock8 size={16} />
-              <span>Review Now</span>
+              <span>立即复习</span>
             </button>
             <button className="cursor-pointer w-full rounded-md py-2 border border-emerald-500 dark:border-emerald-600 text-emerald-500 dark:text-emerald-400 flex items-center justify-center gap-2 hover:bg-emerald-500/20 dark:hover:bg-emerald-600/20 transition-colors">
               <Archive size={16} />
-              <span>Mastered</span>
+              <span>标记为掌握</span>
             </button>
           </div>
         </div>
         <div className="text-center mt-2 text-xs text-gray-500 dark:text-gray-400">
-          Seen 1 times • Last seen 2025/11/24
+          遇到: 1 次 • 上次遇到: 2025/11/24
         </div>
       </div>
     </div>

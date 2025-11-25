@@ -7,15 +7,15 @@ import ReviewModal2 from '../components/ReviewModal2'
 const TABS = [
   {
     id: 'all',
-    name: 'All',
+    name: '全部',
   },
   {
     id: 'learning',
-    name: 'Learning',
+    name: '学习中',
   },
   {
     id: 'mastered',
-    name: 'Mastered',
+    name: '已掌握',
   },
 ] as const
 
@@ -37,7 +37,7 @@ export default function Home() {
           />
           <input
             type="text"
-            placeholder="Search words..."
+            placeholder="搜索单词……"
             className="w-full py-1.5 px-2 pl-7 border border-gray-200 dark:border-gray-700 rounded-md bg-gray-100/50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
           />
         </div>
@@ -81,8 +81,9 @@ export default function Home() {
                   </div>
 
                   <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                    <span>Count: {item.count} \</span>
-                    <span>Last Updated: {item.lastUpdated}</span>
+                    <span>遇到: {item.count} 次</span>
+                    <span className='w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full'></span>
+                    <span>上次遇到: {item.lastUpdated}</span>
                   </div>
                 </div>
 

@@ -5,14 +5,14 @@ import {
   setSyncConfig,
   updateLocalState,
 } from '@/lib/utils/storage'
-import { aiTranslate } from '@/lib/utils/translate'
+import { translate, translateDetailed } from '@/lib/utils/translate'
 
 type BackgroundMessage =
   | { action: 'getLocalState' }
   | { action: 'openTab'; url: string }
   | { action: 'addToWordbook'; text: string }
   | { action: 'openOptionsPage' }
-  | { action: 'translate'; text: string }
+  | { action: 'translate'; text: string; detailed?: boolean }
 
 /**
  * 创建右键菜单项
@@ -102,7 +102,7 @@ chrome.runtime.onStartup.addListener(() => {
  * @returns {boolean} - 是否继续处理
  */
 chrome.runtime.onMessage.addListener(
-  async (
+  (
     request: BackgroundMessage,
     _sender: chrome.runtime.MessageSender,
     sendResponse: (response?: unknown) => void
@@ -133,13 +133,30 @@ chrome.runtime.onMessage.addListener(
     }
 
     if (request.action === 'translate' && request.text) {
-      try {
-        const result = await aiTranslate(request.text)
-        sendResponse({ success: true, result })
-      } catch (error) {
-        sendResponse({ error: (error as Error).message })
-        return true
-      }
+      // 使用 IIFE 处理异步逻辑
+      ;(async () => {
+        try {
+          // 获取目标语言设置
+          const storageData = await chrome.storage.local.get('targetLanguage')
+          const targetLang = (storageData.targetLanguage as string) || 'zh-CN'
+
+          // 根据是否请求详细信息使用不同的翻译方法
+          if (request.detailed) {
+            // 返回详细的翻译结果（包含音标、定义等）
+            const detailedResult = await translateDetailed(request.text, targetLang)
+            sendResponse({ success: true, result: detailedResult })
+          } else {
+            // 返回简单的文本翻译
+            const result = await translate(request.text, targetLang)
+            sendResponse({ success: true, result })
+          }
+        } catch (error) {
+          console.error('翻译失败:', error)
+          sendResponse({ success: false, error: (error as Error).message })
+        }
+      })()
+
+      return true // 保持消息通道打开
     }
 
     return false

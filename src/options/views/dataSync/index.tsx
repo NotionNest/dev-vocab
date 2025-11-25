@@ -1,7 +1,7 @@
 import { Database } from 'lucide-react'
 import SettingCard from '@/options/components/SettingCard'
-import { useState } from 'react'
-import { Outlet, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 
 const Menu = [
   {
@@ -21,12 +21,22 @@ const Menu = [
 ]
 
 export default function DataSync() {
-  const [activeMenu, setActiveMenu] = useState<string>(Menu[0].id)
   const navigate = useNavigate()
+  const location = useLocation()
+
+  // 从当前路径提取活动菜单
+  // 例如: /data-sync/local -> 'local', /data-sync/notion -> 'notion'
+  const currentPath = location.pathname.split('/').pop() || 'local'
+
+  // 页面初始化时，如果路径为空或是父路径，自动跳转到默认路径
+  useEffect(() => {
+    if (location.pathname.endsWith('/data-sync') || location.pathname === '/data-sync') {
+      navigate(Menu[0].path, { replace: true })
+    }
+  }, [location.pathname, navigate])
 
   const navigateTo = (path: string) => {
     navigate(path)
-    setActiveMenu(path)
   }
 
   return (
@@ -35,14 +45,15 @@ export default function DataSync() {
         <div className="flex items-center gap-2">
           {Menu.map(item => (
             <div
+              key={item.id}
               className={`cursor-pointer max-w-70 p-3 border-2 rounded-md ${
-                activeMenu === item.path ? 'border-blue-600' : 'border-gray-300'
+                currentPath === item.path ? 'border-blue-600' : 'border-gray-300'
               }`}
               onClick={() => navigateTo(item.path)}
             >
               <div
                 className={`flex items-center gap-2 ${
-                  activeMenu === item.path ? 'text-blue-600' : 'text-gray-500'
+                  currentPath === item.path ? 'text-blue-600' : 'text-gray-500'
                 }`}
               >
                 {item.icon}

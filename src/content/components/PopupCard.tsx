@@ -1,6 +1,13 @@
 import { WORD_POPUP_EVENT, WordPopupPayload } from '@/lib/utils/messaging'
 import { useEffect, useRef, useState } from 'react'
-import { Settings, X, Copy, LoaderCircle, Volume2, CornerDownLeft } from 'lucide-react'
+import {
+  Settings,
+  X,
+  Copy,
+  LoaderCircle,
+  Volume2,
+  CornerDownLeft,
+} from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 
 export default function PopupCard2() {
@@ -97,14 +104,52 @@ export default function PopupCard2() {
 
     if (payload.classification === 'word') {
       return (
-        <div className="flex items-end gap-2">
-          <div className="text-2xl font-semibold leading-tight text-gray-900 dark:text-gray-100">
-            {payload.content}
+        <div className="space-y-2">
+          <div className="flex items-end gap-2">
+            <div className="text-2xl font-semibold leading-tight text-gray-900 dark:text-gray-100">
+              {payload.content}
+            </div>
+            {payload.phonetic && (
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                /{payload.phonetic}/
+              </div>
+            )}
+            {!payload.phonetic && (
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                /...../
+              </div>
+            )}
+            <button className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-500 cursor-pointer transition-all duration-200">
+              <Volume2 size={16} />
+            </button>
           </div>
-          <div className='text-sm text-gray-500 dark:text-gray-400'>/...../</div>
-          <button className='text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-500 cursor-pointer transition-all duration-200'>
-            <Volume2 size={16} />
-          </button>
+
+          <div
+            className={`text-sm mt-2 flex items-center text-gray-500 dark:text-gray-400 `}
+          >
+            <p className="flex items-center gap-1">
+              {payload?.definition}
+              {!payload?.definition && (
+                <LoaderCircle size={14} className="animate-spin" />
+              )}
+            </p>
+          </div>
+
+          {/* 显示词性和释义 */}
+          {payload.definitions && payload.definitions.length > 0 && (
+            <div className="space-y-1 text-sm">
+              {payload.definitions.map((def, idx) => (
+                <div key={idx} className="flex gap-2">
+                  <span className="text-blue-600 dark:text-blue-400 font-medium shrink-0">
+                    {def.partOfSpeech}
+                  </span>
+                  <span className="text-gray-700 dark:text-gray-300">
+                    {def.meanings.slice(0, 3).join('；')}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )
     }
@@ -118,7 +163,9 @@ export default function PopupCard2() {
     if (selectedWordsSet.size === 0) {
       return (
         <div className="max-h-24 overflow-y-auto scroll-smoothbar overscroll-contain">
-          <div className="text-sm text-gray-700 dark:text-gray-300">{payload.content}</div>
+          <div className="text-sm text-gray-700 dark:text-gray-300">
+            {payload.content}
+          </div>
         </div>
       )
     }
@@ -198,22 +245,6 @@ export default function PopupCard2() {
           <div className="px-5 max-h-[300px] overflow-y-auto">
             {renderContent()}
 
-            <div
-              className={`text-sm mt-2 flex items-center text-gray-500 dark:text-gray-400 ${
-                payload?.classification === 'sentence'
-                  ? 'border-b border-gray-200 dark:border-gray-700 pb-2'
-                  : ''
-              }`}
-            >
-              <span className="text-gray-500 dark:text-gray-400">释义：</span>
-              <p className="flex items-center gap-1">
-                {payload?.definition}
-                {!payload?.definition && (
-                  <LoaderCircle size={14} className="animate-spin" />
-                )}
-              </p>
-            </div>
-
             {payload?.classification === 'sentence' && (
               <div>
                 <div className="text-sm text-gray-500 dark:text-gray-400 my-2">
@@ -224,8 +255,8 @@ export default function PopupCard2() {
                     <div
                       key={word.word}
                       className={`text-xs text-gray-700 dark:text-gray-300 cursor-pointer rounded-xl py-1 px-2 transition-colors ${
-                        word.isSelected 
-                          ? 'bg-sky-100 dark:bg-sky-900' 
+                        word.isSelected
+                          ? 'bg-sky-100 dark:bg-sky-900'
                           : 'bg-gray-200 dark:bg-gray-700'
                       }`}
                       onClick={() => suggestSelectedWords(word.word)}
@@ -254,7 +285,9 @@ export default function PopupCard2() {
                     <Copy size={14} />
                   </button>
                 </div>
-                <div className="text-sm text-gray-700 dark:text-gray-300">{payload?.context}</div>
+                <div className="text-sm text-gray-700 dark:text-gray-300">
+                  {payload?.context}
+                </div>
               </div>
             </div>
 
@@ -276,7 +309,9 @@ export default function PopupCard2() {
               className="w-full rounded-md bg-sky-600 dark:bg-sky-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-sky-500 dark:hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 dark:focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {payload?.classification === 'word' ? (
-                <span className='flex items-center justify-center gap-1'>添加到生词本 <CornerDownLeft size={14} /></span>
+                <span className="flex items-center justify-center gap-1">
+                  添加到生词本 <CornerDownLeft size={14} />
+                </span>
               ) : (
                 <span>
                   Add {suggestedWords.filter(w => w.isSelected).length} Words

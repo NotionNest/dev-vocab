@@ -26,6 +26,17 @@ export type WordPopupPayload = {
   source?: string // 来源
   position?: { x: number; y: number } // 位置
   error?: string // 错误信息
+  // 详细翻译信息
+  phonetic?: string // 音标
+  phoneticUs?: string // 美式音标
+  phoneticUk?: string // 英式音标
+  definitions?: Array<{
+    partOfSpeech: string
+    meanings: string[]
+  }>
+  examples?: string[] // 例句
+  synonyms?: string[] // 同义词
+  alternativeTranslations?: string[] // 备选翻译
 }
 
 export const WORD_POPUP_EVENT = 'devvocab:showPopup'
@@ -122,28 +133,80 @@ export const handleRuntimeMessage = (
       position,
     })
 
-    chrome.runtime.sendMessage(
-      {
-        action: 'translate',
-        text: text,
-      },
-      response => {
-        if (response.success) {
-          setTimeout(() => {
-            dispatchPopupEvent({
-              classification: classification,
-              content: text,
-              context,
-              definition: '释义获取成功',
-              source: window.location.hostname,
-              position,
-            })
-          }, 2000)
-        } else {
-          console.error('翻译失败', response.error)
+    // 使用 async/await 风格进行翻译（获取详细信息）
+    ;(async () => {
+      try {
+        // 动态导入翻译函数
+        const { sendMessage } = await import('./chrome')
+        
+        console.log('开始翻译:', text)
+        
+        // 定义翻译结果类型
+        interface DetailedResult {
+          text: string
+          phonetic?: string
+          phoneticUs?: string
+          phoneticUk?: string
+          definitions?: Array<{ partOfSpeech: string; meanings: string[] }>
+          examples?: string[]
+          synonyms?: string[]
+          alternativeTranslations?: string[]
         }
+        
+        // 发送翻译请求，请求详细信息
+        const response = await sendMessage<DetailedResult | string>({
+          action: 'translate',
+          text: text,
+          detailed: true, // 请求详细信息
+        })
+        
+        console.log('翻译成功，结果:', response.result)
+        
+        // 检查是否是详细翻译结果
+        const result = response.result
+        
+        if (result && typeof result === 'object' && 'text' in result) {
+          // 详细翻译结果
+          const detailedResult = result as DetailedResult
+          dispatchPopupEvent({
+            classification: classification,
+            content: text,
+            context,
+            definition: detailedResult.text || '翻译完成',
+            phonetic: detailedResult.phonetic,
+            phoneticUs: detailedResult.phoneticUs,
+            phoneticUk: detailedResult.phoneticUk,
+            definitions: detailedResult.definitions,
+            examples: detailedResult.examples,
+            synonyms: detailedResult.synonyms,
+            alternativeTranslations: detailedResult.alternativeTranslations,
+            source: window.location.hostname,
+            position,
+          })
+        } else {
+          // 简单文本结果（降级处理）
+          dispatchPopupEvent({
+            classification: classification,
+            content: text,
+            context,
+            definition: (result as string) || '翻译完成',
+            source: window.location.hostname,
+            position,
+          })
+        }
+      } catch (error) {
+        console.error('翻译失败:', error)
+        // 显示错误信息
+        dispatchPopupEvent({
+          classification: classification,
+          content: text,
+          context,
+          definition: `翻译失败: ${(error as Error).message || '未知错误'}`,
+          source: window.location.hostname,
+          position,
+        })
       }
-    )
+    })()
 
     sendResponse({ success: true })
     return
