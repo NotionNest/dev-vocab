@@ -10,14 +10,12 @@ import { TranslationResult } from './translation'
 /**
  * 消息动作类型
  */
-export type MessageAction = 
+export type MessageAction =
   | 'translate'
   | 'openOptionsPage'
-  | 'addToWordbook'
   | 'getLocalState'
   | 'openTab'
   | 'ping'
-  | 'changeBackground'
 
 /**
  * 基础消息接口
@@ -37,18 +35,8 @@ export interface MessageResponse<T = any> {
 }
 
 // ==================== 具体消息类型 ====================
-
-export type ChangeBackgroundMessage = {
-  action: 'changeBackground'
-}
-
 export type PingMessage = {
   action: 'ping'
-}
-
-export type AddToWordbookMessage = {
-  action: 'addToWordbook'
-  text: string
 }
 
 export type TranslateMessage = {
@@ -57,10 +45,7 @@ export type TranslateMessage = {
   detailed?: boolean
 }
 
-export type ExtensionMessage =
-  | ChangeBackgroundMessage
-  | PingMessage
-  | AddToWordbookMessage
+export type ExtensionMessage = PingMessage | TranslateMessage
 
 // ==================== 翻译响应 ====================
 
@@ -89,7 +74,7 @@ export interface TranslateResponse extends MessageResponse<string> {
 export interface WordPopupPayload extends TranslationResult {
   classification: Classification
   context: string
-  position?: { x: number; y: number }  // 弹窗位置
+  position?: { x: number; y: number } // 弹窗位置
   source: string
   error?: string
 }
@@ -98,4 +83,3 @@ export interface WordPopupPayload extends TranslationResult {
  * 单词弹窗事件名称
  */
 export const WORD_POPUP_EVENT = 'devvocab:showPopup'
-

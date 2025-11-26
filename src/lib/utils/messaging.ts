@@ -35,7 +35,7 @@ export const handleRuntimeMessage = (
     sendResponse({ success: true })
   }
 
-  if (request.action === 'addToWordbook') {
+  if (request.action === 'translate') {
     const selection = window.getSelection()
     const text = selection?.toString().trim() ?? ''
 
@@ -119,10 +119,7 @@ export const handleRuntimeMessage = (
       }
     })()
 
-    // 注意：这里的 sendResponse 是对 addToWordbook 消息的响应
     // 翻译是在 IIFE 中异步进行的，不需要等待
     sendResponse({ success: true })
   }
-
- 
 }

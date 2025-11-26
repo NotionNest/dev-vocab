@@ -65,12 +65,30 @@ export default function PopupCard2() {
     }
   }, [show])
 
-  const addToVocabulary = (_word: string) => {
-    // chrome.runtime.sendMessage({
-    //   action: 'addToWordbook',
-    //   text: word,
-    // })
+  const addToVocabulary = () => {
+    console.log('addToVocabulary', payload)
+    chrome.runtime.sendMessage({ action: 'addToVocabulary', detail: payload })
+    setShow(false)
   }
+
+  useEffect(() => {
+    if (!show) return
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== 'Enter') return
+      const canAddWord =
+        payload?.classification === 'word' && Boolean(payload?.original)
+      if (!canAddWord) return
+
+      event.preventDefault()
+      addToVocabulary()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [show, payload])
 
   if (!show) return null
 
@@ -142,10 +160,14 @@ export default function PopupCard2() {
       <div className="px-5 py-4">
         <button
           type="button"
-          disabled={!payload?.original || selectedWordLength === 0}
+          disabled={
+            payload?.classification === 'word'
+              ? !payload?.original
+              : selectedWordLength === 0
+          }
           onClick={() => {
             if (payload?.classification === 'word') {
-              addToVocabulary(payload.original)
+              addToVocabulary()
             }
           }}
           className="w-full rounded-md bg-sky-600 dark:bg-sky-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-sky-500 dark:hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 dark:focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-60"

@@ -6,11 +6,17 @@ import {
   updateLocalState,
 } from '@/lib/utils/storage'
 import { translate, translateDetailed } from '@/lib/utils/translate'
+import {
+  getVocabularyEntries,
+  saveVocabularyEntries,
+  VocabularyEntry,
+} from '@/lib/utils/vocabulary'
+import { WordPopupPayload } from '@/types'
 
 type BackgroundMessage =
   | { action: 'getLocalState' }
   | { action: 'openTab'; url: string }
-  | { action: 'addToWordbook'; text: string }
+  | { action: 'addToVocabulary'; detail: WordPopupPayload }
   | { action: 'openOptionsPage' }
   | { action: 'translate'; text: string; detailed?: boolean }
 
@@ -107,6 +113,7 @@ chrome.runtime.onMessage.addListener(
     _sender: chrome.runtime.MessageSender,
     sendResponse: (response?: unknown) => void
   ) => {
+    console.log('收到消息:', request)
     if (request.action === 'getLocalState') {
       chrome.storage.local.get(DEFAULT_LOCAL_STATE, (data: LocalState) => {
         sendResponse(data)
@@ -123,12 +130,41 @@ chrome.runtime.onMessage.addListener(
       chrome.runtime.openOptionsPage()
       sendResponse({ success: true })
     }
+    if (request.action === 'addToVocabulary' && request.detail) {
+      ;(async () => {
+        try {
+          const existingEntries = await getVocabularyEntries()
+          const newEntry: VocabularyEntry = {
+            ...request.detail,
+            savedAt: new Date().toISOString(),
+            id: new Date().getTime().toString(),
+          }
 
-    if (request.action === 'addToWordbook' && request.text) {
-      // 在这里处理添加到单词本的逻辑
-      console.log('收到要添加的文本:', request.text)
-      // TODO: 实现添加到单词本的逻辑
-      sendResponse({ success: true })
+          const duplicateIndex = existingEntries.findIndex(
+            entry =>
+              entry.original === newEntry.original &&
+              entry.source === newEntry.source
+          )
+          const updatedEntries =
+            duplicateIndex > -1
+              ? existingEntries.map((entry, index) =>
+                  index === duplicateIndex ? newEntry : entry
+                )
+              : [newEntry, ...existingEntries]
+
+          await saveVocabularyEntries(updatedEntries)
+          // await syncVocabularyToRemote(newEntry)
+
+          // 通知侧边栏触发更新
+          chrome.runtime.sendMessage({ action: 'updateVocabulary' })
+
+          sendResponse({ success: true, data: newEntry })
+        } catch (error) {
+          console.error('保存单词失败:', error)
+          sendResponse({ success: false, error: (error as Error).message })
+        }
+      })()
+
       return true
     }
 
@@ -221,7 +257,7 @@ chrome.commands.onCommand.addListener(async (command: string) => {
 
     try {
       // 发送消息到 content script
-      chrome.tabs.sendMessage(tab.id, { action: 'addToWordbook' })
+      chrome.tabs.sendMessage(tab.id, { action: 'translate' })
     } catch (error) {
       console.error('发送消息时出错:', error)
     }
