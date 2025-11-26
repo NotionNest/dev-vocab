@@ -1,0 +1,42 @@
+.context-side {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background-color: #81b7f6;
+}
+.rounded-md {
+  border-radius: 0.375rem;
+}
+.italic {
+  font-style: italic;
+}
+
+.decoration-wavy {
+  text-decoration-style: wavy;
+}
+.decoration-yellow-500 {
+  text-decoration-color: #ffd700;
+}
+
+.suggestion-word-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.suggestion-word {
+  border: 1px solid #d1d6db;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  color: #364153;
+  cursor: pointer;
+}
+
+.suggestion-word.selected {
+  border-color: #81b7f6;
+  color: #81b7f6;
+  font-weight: bold;
+  background-color: #f0f9ff;
+}

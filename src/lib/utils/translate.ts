@@ -1,98 +1,66 @@
 // src/utils/translate.ts
 
-// ==================== 数据结构定义 ====================
+import {
+  TranslationServiceType,
+  TranslationProviderId,
+  TranslationService,
+  TranslationResult,
+  Definition,
+  APIConfig,
+  PartOfSpeech,
+  PART_OF_SPEECH_NAMES,
+  getPartOfSpeechName,
+} from '@/types/translation'
 
-/**
- * 翻译服务类型
- */
-export enum TranslationServiceType {
-  FREE = 'free',          // 免费服务
-  LLM = 'llm',            // LLM API 服务
-  CUSTOM = 'custom',      // 自定义服务
+// 重新导出供外部使用
+export type {
+  TranslationService,
+  TranslationResult,
+  Definition,
+  APIConfig,
+}
+export {
+  TranslationServiceType,
+  TranslationProviderId,
+  PartOfSpeech,
+  PART_OF_SPEECH_NAMES,
+  getPartOfSpeechName,
 }
 
-/**
- * 翻译服务提供商 ID
- */
-export enum TranslationProviderId {
-  // 免费服务
-  GOOGLE = 'google',
-  DEEPL = 'deepl',
-  YOUDAO = 'youdao',
-  BAIDU = 'baidu',
-  
-  // LLM 服务
-  OPENAI = 'openai',
-  CLAUDE = 'claude',
-  GEMINI = 'gemini',
-  CUSTOM_OPENAI = 'custom-openai',
-}
-
-/**
- * API 配置接口
- */
-export interface APIConfig {
-  apiKey?: string
-  apiEndpoint?: string
-  model?: string
-  // 其他可选配置
-  appId?: string      // 百度、有道等需要
-  appSecret?: string  // 百度、有道等需要
-  [key: string]: any
-}
-
-/**
- * 标准词性缩写枚举
- */
-export enum PartOfSpeech {
-  NOUN = 'n.',              // 名词
-  VERB = 'v.',              // 动词
-  ADJECTIVE = 'adj.',       // 形容词
-  ADVERB = 'adv.',          // 副词
-  PRONOUN = 'pron.',        // 代词
-  PREPOSITION = 'prep.',    // 介词
-  CONJUNCTION = 'conj.',    // 连词
-  INTERJECTION = 'interj.', // 感叹词
-  ARTICLE = 'art.',         // 冠词
-  NUMERAL = 'num.',         // 数词
-  AUXILIARY = 'aux.',       // 助动词
-  MODAL = 'modal',          // 情态动词
-  PHRASE = 'phrase',        // 短语
-  IDIOM = 'idiom',          // 习语
-}
+// ==================== 词性标准化工具 ====================
 
 /**
  * 词性映射表（将 Google Translate 返回的词性转换为标准缩写）
  */
 const PART_OF_SPEECH_MAP: Record<string, string> = {
   // 英文完整形式
-  'noun': PartOfSpeech.NOUN,
-  'verb': PartOfSpeech.VERB,
-  'adjective': PartOfSpeech.ADJECTIVE,
-  'adverb': PartOfSpeech.ADVERB,
-  'pronoun': PartOfSpeech.PRONOUN,
-  'preposition': PartOfSpeech.PREPOSITION,
-  'conjunction': PartOfSpeech.CONJUNCTION,
-  'interjection': PartOfSpeech.INTERJECTION,
-  'article': PartOfSpeech.ARTICLE,
-  'numeral': PartOfSpeech.NUMERAL,
-  
+  noun: PartOfSpeech.NOUN,
+  verb: PartOfSpeech.VERB,
+  adjective: PartOfSpeech.ADJECTIVE,
+  adverb: PartOfSpeech.ADVERB,
+  pronoun: PartOfSpeech.PRONOUN,
+  preposition: PartOfSpeech.PREPOSITION,
+  conjunction: PartOfSpeech.CONJUNCTION,
+  interjection: PartOfSpeech.INTERJECTION,
+  article: PartOfSpeech.ARTICLE,
+  numeral: PartOfSpeech.NUMERAL,
+
   // Google Translate 可能返回的形式
-  'Noun': PartOfSpeech.NOUN,
-  'Verb': PartOfSpeech.VERB,
-  'Adjective': PartOfSpeech.ADJECTIVE,
-  'Adverb': PartOfSpeech.ADVERB,
-  
+  Noun: PartOfSpeech.NOUN,
+  Verb: PartOfSpeech.VERB,
+  Adjective: PartOfSpeech.ADJECTIVE,
+  Adverb: PartOfSpeech.ADVERB,
+
   // 中文形式
-  '名词': PartOfSpeech.NOUN,
-  '动词': PartOfSpeech.VERB,
-  '形容词': PartOfSpeech.ADJECTIVE,
-  '副词': PartOfSpeech.ADVERB,
-  '代词': PartOfSpeech.PRONOUN,
-  '介词': PartOfSpeech.PREPOSITION,
-  '连词': PartOfSpeech.CONJUNCTION,
-  '感叹词': PartOfSpeech.INTERJECTION,
-  '冠词': PartOfSpeech.ARTICLE,
+  名词: PartOfSpeech.NOUN,
+  动词: PartOfSpeech.VERB,
+  形容词: PartOfSpeech.ADJECTIVE,
+  副词: PartOfSpeech.ADVERB,
+  代词: PartOfSpeech.PRONOUN,
+  介词: PartOfSpeech.PREPOSITION,
+  连词: PartOfSpeech.CONJUNCTION,
+  感叹词: PartOfSpeech.INTERJECTION,
+  冠词: PartOfSpeech.ARTICLE,
 }
 
 /**
@@ -102,21 +70,22 @@ const PART_OF_SPEECH_MAP: Record<string, string> = {
  */
 function normalizePartOfSpeech(pos: string): string {
   if (!pos) return ''
-  
+
   // 移除空格并转换为小写进行匹配
   const normalized = pos.trim().toLowerCase()
-  
+
   // 如果已经是标准缩写形式，直接返回
   if (Object.values(PartOfSpeech).includes(pos as PartOfSpeech)) {
     return pos
   }
-  
+
   // 尝试从映射表查找
-  const mapped = PART_OF_SPEECH_MAP[normalized] || PART_OF_SPEECH_MAP[pos.trim()]
+  const mapped =
+    PART_OF_SPEECH_MAP[normalized] || PART_OF_SPEECH_MAP[pos.trim()]
   if (mapped) {
     return mapped
   }
-  
+
   // 如果映射表中没有，尝试智能匹配
   if (normalized.includes('noun') || normalized.includes('名词')) {
     return PartOfSpeech.NOUN
@@ -130,83 +99,9 @@ function normalizePartOfSpeech(pos: string): string {
   if (normalized.includes('adv') || normalized.includes('副词')) {
     return PartOfSpeech.ADVERB
   }
-  
+
   // 如果都不匹配，返回原始值
   return pos
-}
-
-/**
- * 词性完整名称映射（中英文）
- */
-export const PART_OF_SPEECH_NAMES: Record<string, { en: string; zh: string }> = {
-  [PartOfSpeech.NOUN]: { en: 'noun', zh: '名词' },
-  [PartOfSpeech.VERB]: { en: 'verb', zh: '动词' },
-  [PartOfSpeech.ADJECTIVE]: { en: 'adjective', zh: '形容词' },
-  [PartOfSpeech.ADVERB]: { en: 'adverb', zh: '副词' },
-  [PartOfSpeech.PRONOUN]: { en: 'pronoun', zh: '代词' },
-  [PartOfSpeech.PREPOSITION]: { en: 'preposition', zh: '介词' },
-  [PartOfSpeech.CONJUNCTION]: { en: 'conjunction', zh: '连词' },
-  [PartOfSpeech.INTERJECTION]: { en: 'interjection', zh: '感叹词' },
-  [PartOfSpeech.ARTICLE]: { en: 'article', zh: '冠词' },
-  [PartOfSpeech.NUMERAL]: { en: 'numeral', zh: '数词' },
-  [PartOfSpeech.AUXILIARY]: { en: 'auxiliary', zh: '助动词' },
-  [PartOfSpeech.MODAL]: { en: 'modal', zh: '情态动词' },
-  [PartOfSpeech.PHRASE]: { en: 'phrase', zh: '短语' },
-  [PartOfSpeech.IDIOM]: { en: 'idiom', zh: '习语' },
-}
-
-/**
- * 获取词性的完整名称
- * @param pos 词性缩写
- * @param lang 语言（'en' 或 'zh'）
- * @returns 词性完整名称
- */
-export function getPartOfSpeechName(pos: string, lang: 'en' | 'zh' = 'zh'): string {
-  const name = PART_OF_SPEECH_NAMES[pos]
-  return name ? name[lang] : pos
-}
-
-/**
- * 词典释义定义
- */
-export interface Definition {
-  partOfSpeech: string           // 词性（n. v. adj.等）
-  meanings: string[]             // 该词性下的多个含义
-  examples?: string[]            // 例句
-}
-
-/**
- * 详细的翻译结果
- */
-export interface TranslationResult {
-  text: string                    // 翻译文本（主要翻译）
-  original: string                // 原文
-  phonetic?: string               // 音标
-  phoneticUs?: string             // 美式音标
-  phoneticUk?: string             // 英式音标
-  sourceLanguage?: string         // 源语言
-  targetLanguage?: string         // 目标语言
-  definitions?: Definition[]      // 多个释义（按词性分类）
-  alternativeTranslations?: string[]  // 其他可能的翻译
-  examples?: string[]             // 例句
-  synonyms?: string[]             // 同义词
-}
-
-/**
- * 翻译服务提供商接口
- */
-export interface TranslationService {
-  id: string                              // 唯一标识符
-  name: string                            // 显示名称
-  type: TranslationServiceType            // 服务类型
-  providerId?: TranslationProviderId      // 内置提供商ID（自定义服务为空）
-  enabled: boolean                        // 是否启用
-  priority: number                        // 优先级（数字越小优先级越高）
-  configured: boolean                     // 是否已配置（是否有必需的API凭证）
-  config: APIConfig                       // API 配置
-  isBuiltIn: boolean                      // 是否为内置服务
-  description?: string                    // 描述
-  icon?: string                           // 图标
 }
 
 // ==================== 内置服务定义 ====================
@@ -272,7 +167,7 @@ export const BUILT_IN_SERVICES: Omit<TranslationService, 'configured'>[] = [
     description: '百度翻译 API',
     icon: '🐻',
   },
-  
+
   // LLM 服务
   {
     id: TranslationProviderId.OPENAI,
@@ -353,13 +248,13 @@ async function translateWithGoogleDetailed(
   // 使用 Google Translate 免费 API，添加多个 dt 参数获取详细信息
   // dt=t: 翻译, dt=rm: 音标, dt=bd: 词典定义, dt=at: 备选翻译, dt=ex: 例句, dt=ss: 同义词
   // 手动构建 URL，因为需要多个同名 dt 参数
-  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&dt=rm&dt=bd&dt=at&dt=ex&dt=ss&q=${encodeURIComponent(text)}`
-  
+  const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&dt=rm&dt=bd&dt=at&dt=ex&dt=ss&q=${encodeURIComponent(
+    text
+  )}`
+
   const response = await fetch(url)
   const data = await response.json()
-  
-  console.log('Google Translate 详细数据:', JSON.stringify(data, null, 2))
-  
+
   // 解析返回的数据结构
   // data[0]: 翻译文本数组
   // data[1]: 词典定义
@@ -367,14 +262,14 @@ async function translateWithGoogleDetailed(
   // data[5]: 备选翻译
   // data[12]: 同义词
   // data[13]: 例句
-  
+
   const result: TranslationResult = {
     text: '',
     original: text,
     sourceLanguage: data[2] || 'auto',
     targetLanguage: targetLang,
   }
-  
+
   // 1. 提取主要翻译
   if (data[0] && Array.isArray(data[0])) {
     result.text = data[0]
@@ -382,29 +277,34 @@ async function translateWithGoogleDetailed(
       .map((item: any) => item[0])
       .join('')
   }
-  
+
   // 2. 提取音标（如果有）
   if (data[0] && data[0][1] && data[0][1][3]) {
     result.phonetic = data[0][1][3]
   }
-  
+
   // 3. 提取词典定义（按词性分类）
   if (data[1] && Array.isArray(data[1])) {
     result.definitions = data[1].map((def: any) => ({
       partOfSpeech: normalizePartOfSpeech(def[0] || ''),
       meanings: def[1] || [],
-      examples: []
+      examples: [],
     }))
   }
-  
+
   // 4. 提取备选翻译
-  if (data[5] && Array.isArray(data[5]) && data[5][0] && Array.isArray(data[5][0][2])) {
+  if (
+    data[5] &&
+    Array.isArray(data[5]) &&
+    data[5][0] &&
+    Array.isArray(data[5][0][2])
+  ) {
     result.alternativeTranslations = data[5][0][2]
       .filter((item: any) => item && item[0])
       .map((item: any) => item[0])
       .slice(0, 5) // 只取前5个
   }
-  
+
   // 5. 提取同义词
   if (data[11] && Array.isArray(data[11])) {
     result.synonyms = data[11]
@@ -412,9 +312,14 @@ async function translateWithGoogleDetailed(
       .filter((word: string) => word && word !== text)
       .slice(0, 10) // 只取前10个
   }
-  
+
   // 6. 提取例句
-  if (data[13] && Array.isArray(data[13]) && data[13][0] && Array.isArray(data[13][0])) {
+  if (
+    data[13] &&
+    Array.isArray(data[13]) &&
+    data[13][0] &&
+    Array.isArray(data[13][0])
+  ) {
     result.examples = data[13][0]
       .map((example: any) => example[0])
       .filter((ex: string) => ex)
@@ -422,11 +327,11 @@ async function translateWithGoogleDetailed(
   }
 
   console.log('Google Translate 结果:', result)
-  
+
   if (!result.text) {
     throw new Error('Google Translate 返回数据格式错误')
   }
-  
+
   return result
 }
 
@@ -455,7 +360,7 @@ async function translateWithDeepL(
   }
 
   const url = 'https://api-free.deepl.com/v2/translate'
-  
+
   const formData = new URLSearchParams()
   formData.append('text', text)
   formData.append('target_lang', targetLang.toUpperCase())
@@ -470,11 +375,11 @@ async function translateWithDeepL(
   })
 
   const data = await response.json()
-  
+
   if (data.translations && data.translations[0]) {
     return data.translations[0].text
   }
-  
+
   throw new Error('DeepL 翻译失败')
 }
 
@@ -492,10 +397,19 @@ async function translateWithYoudao(
 
   const salt = Date.now().toString()
   const curtime = Math.round(Date.now() / 1000).toString()
-  const input = text.length <= 20 ? text : text.substring(0, 10) + text.length + text.substring(text.length - 10)
-  
+  const input =
+    text.length <= 20
+      ? text
+      : text.substring(0, 10) + text.length + text.substring(text.length - 10)
+
   // 生成签名
-  const sign = await generateYoudaoSign(config.appId, input, salt, curtime, config.appSecret)
+  const sign = await generateYoudaoSign(
+    config.appId,
+    input,
+    salt,
+    curtime,
+    config.appSecret
+  )
 
   const url = 'https://openapi.youdao.com/api'
   const formData = new URLSearchParams()
@@ -517,11 +431,11 @@ async function translateWithYoudao(
   })
 
   const data = await response.json()
-  
+
   if (data.translation && data.translation[0]) {
     return data.translation[0]
   }
-  
+
   throw new Error(`有道翻译失败: ${data.errorCode || 'Unknown error'}`)
 }
 
@@ -569,11 +483,11 @@ async function translateWithBaidu(
 
   const response = await fetch(`${url}?${params.toString()}`)
   const data = await response.json()
-  
+
   if (data.trans_result && data.trans_result[0]) {
     return data.trans_result[0].dst
   }
-  
+
   throw new Error(`百度翻译失败: ${data.error_code || 'Unknown error'}`)
 }
 
@@ -640,7 +554,13 @@ function md5(str: string): string {
       const temp = dd
       dd = cc
       cc = bb
-      bb = addUnsigned(bb, rotateLeft(addUnsigned(addUnsigned(aa, f), addUnsigned(x[g], t[i])), s[i % 4]))
+      bb = addUnsigned(
+        bb,
+        rotateLeft(
+          addUnsigned(addUnsigned(aa, f), addUnsigned(x[g], t[i])),
+          s[i % 4]
+        )
+      )
       aa = temp
     }
 
@@ -693,12 +613,7 @@ function md5(str: string): string {
   // 转换为十六进制字符串
   const result = [a, b, c, d]
     .map(n => {
-      return [
-        n & 0xff,
-        (n >>> 8) & 0xff,
-        (n >>> 16) & 0xff,
-        (n >>> 24) & 0xff,
-      ]
+      return [n & 0xff, (n >>> 8) & 0xff, (n >>> 16) & 0xff, (n >>> 24) & 0xff]
         .map(byte => byte.toString(16).padStart(2, '0'))
         .join('')
     })
@@ -732,31 +647,39 @@ async function translateWithOpenAI(
     throw new Error('OpenAI API Key 未配置')
   }
 
-  const endpoint = config.apiEndpoint || 'https://api.openai.com/v1/chat/completions'
+  const endpoint =
+    config.apiEndpoint || 'https://api.openai.com/v1/chat/completions'
   const model = config.model || 'gpt-4o-mini'
 
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
+      Authorization: `Bearer ${config.apiKey}`,
     },
     body: JSON.stringify({
       model,
       messages: [
-        { role: 'system', content: 'You are a professional translator. Translate the given text accurately and naturally.' },
-        { role: 'user', content: `Translate the following text to ${targetLang}:\n\n${text}` }
+        {
+          role: 'system',
+          content:
+            'You are a professional translator. Translate the given text accurately and naturally.',
+        },
+        {
+          role: 'user',
+          content: `Translate the following text to ${targetLang}:\n\n${text}`,
+        },
       ],
       temperature: 0.3,
     }),
   })
 
   const data = await response.json()
-  
+
   if (data.choices && data.choices[0] && data.choices[0].message) {
     return data.choices[0].message.content.trim()
   }
-  
+
   throw new Error('OpenAI 翻译失败')
 }
 
@@ -788,18 +711,18 @@ async function translateWithClaude(
       messages: [
         {
           role: 'user',
-          content: `Translate the following text to ${targetLang}:\n\n${text}`
-        }
+          content: `Translate the following text to ${targetLang}:\n\n${text}`,
+        },
       ],
     }),
   })
 
   const data = await response.json()
-  
+
   if (data.content && data.content[0] && data.content[0].text) {
     return data.content[0].text.trim()
   }
-  
+
   throw new Error('Claude 翻译失败')
 }
 
@@ -824,11 +747,15 @@ async function translateWithGemini(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      contents: [{
-        parts: [{
-          text: `Translate the following text to ${targetLang}:\n\n${text}`
-        }]
-      }],
+      contents: [
+        {
+          parts: [
+            {
+              text: `Translate the following text to ${targetLang}:\n\n${text}`,
+            },
+          ],
+        },
+      ],
       generationConfig: {
         temperature: 0.3,
       },
@@ -836,11 +763,11 @@ async function translateWithGemini(
   })
 
   const data = await response.json()
-  
+
   if (data.candidates && data.candidates[0] && data.candidates[0].content) {
     return data.candidates[0].content.parts[0].text.trim()
   }
-  
+
   throw new Error('Gemini 翻译失败')
 }
 
@@ -862,23 +789,23 @@ async function translateWithCustomOpenAI(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${config.apiKey}`,
+      Authorization: `Bearer ${config.apiKey}`,
     },
     body: JSON.stringify({
       model,
       messages: [
         { role: 'system', content: 'You are a professional translator.' },
-        { role: 'user', content: `Translate to ${targetLang}:\n\n${text}` }
+        { role: 'user', content: `Translate to ${targetLang}:\n\n${text}` },
       ],
     }),
   })
 
   const data = await response.json()
-  
+
   if (data.choices && data.choices[0] && data.choices[0].message) {
     return data.choices[0].message.content.trim()
   }
-  
+
   throw new Error('自定义 API 翻译失败')
 }
 
@@ -897,7 +824,7 @@ export async function translateWithServiceDetailed(
   if (service.providerId === TranslationProviderId.GOOGLE) {
     return translateWithGoogleDetailed(text, targetLang, service.config)
   }
-  
+
   // 其他服务降级为简单翻译，包装成 TranslationResult
   const translatedText = await translateWithService(service, text, targetLang)
   return {
@@ -918,28 +845,28 @@ export async function translateWithService(
   switch (service.providerId) {
     case TranslationProviderId.GOOGLE:
       return translateWithGoogle(text, targetLang, service.config)
-    
+
     case TranslationProviderId.DEEPL:
       return translateWithDeepL(text, targetLang, service.config)
-    
+
     case TranslationProviderId.YOUDAO:
       return translateWithYoudao(text, targetLang, service.config)
-    
+
     case TranslationProviderId.BAIDU:
       return translateWithBaidu(text, targetLang, service.config)
-    
+
     case TranslationProviderId.OPENAI:
       return translateWithOpenAI(text, targetLang, service.config)
-    
+
     case TranslationProviderId.CLAUDE:
       return translateWithClaude(text, targetLang, service.config)
-    
+
     case TranslationProviderId.GEMINI:
       return translateWithGemini(text, targetLang, service.config)
-    
+
     case TranslationProviderId.CUSTOM_OPENAI:
       return translateWithCustomOpenAI(text, targetLang, service.config)
-    
+
     default:
       // 自定义服务，默认使用 OpenAI 兼容方式
       return translateWithCustomOpenAI(text, targetLang, service.config)
@@ -951,9 +878,9 @@ export async function translateWithService(
  */
 async function getEnabledServices(): Promise<TranslationService[]> {
   const TRANSLATION_SERVICES_KEY = 'translationServices'
-  
-  return new Promise((resolve) => {
-    chrome.storage.local.get([TRANSLATION_SERVICES_KEY], (result) => {
+
+  return new Promise(resolve => {
+    chrome.storage.local.get([TRANSLATION_SERVICES_KEY], result => {
       const services = result[TRANSLATION_SERVICES_KEY]
       if (services && Array.isArray(services)) {
         // 筛选已启用且已配置的服务，按优先级排序
@@ -963,10 +890,12 @@ async function getEnabledServices(): Promise<TranslationService[]> {
         resolve(enabled)
       } else {
         // 如果没有配置，使用默认的 Google Translate
-        resolve([{
-          ...BUILT_IN_SERVICES[0], // Google Translate
-          configured: true,
-        }])
+        resolve([
+          {
+            ...BUILT_IN_SERVICES[0], // Google Translate
+            configured: true,
+          },
+        ])
       }
     })
   })
@@ -976,9 +905,12 @@ async function getEnabledServices(): Promise<TranslationService[]> {
  * 使用优先级和回退机制进行翻译（详细版）
  * @returns TranslationResult 包含音标、定义等详细信息
  */
-export async function translateDetailed(text: string, targetLang: string = 'zh-CN'): Promise<TranslationResult> {
+export async function translateDetailed(
+  text: string,
+  targetLang: string = 'zh-CN'
+): Promise<TranslationResult> {
   const services = await getEnabledServices()
-  
+
   if (services.length === 0) {
     throw new Error('没有可用的翻译服务，请在设置中配置')
   }
@@ -989,7 +921,11 @@ export async function translateDetailed(text: string, targetLang: string = 'zh-C
   for (const service of services) {
     try {
       console.log(`尝试使用 ${service.name} 进行详细翻译...`)
-      const result = await translateWithServiceDetailed(service, text, targetLang)
+      const result = await translateWithServiceDetailed(
+        service,
+        text,
+        targetLang
+      )
       console.log(`${service.name} 翻译成功，获取到详细信息`)
       return result
     } catch (error) {
@@ -1000,15 +936,20 @@ export async function translateDetailed(text: string, targetLang: string = 'zh-C
   }
 
   // 所有服务都失败
-  throw new Error(`所有翻译服务都失败了。最后的错误: ${lastError?.message || 'Unknown error'}`)
+  throw new Error(
+    `所有翻译服务都失败了。最后的错误: ${lastError?.message || 'Unknown error'}`
+  )
 }
 
 /**
  * 使用优先级和回退机制进行翻译（简化版，仅返回文本）
  */
-export async function translate(text: string, targetLang: string = 'zh-CN'): Promise<string> {
+export async function translate(
+  text: string,
+  targetLang: string = 'zh-CN'
+): Promise<string> {
   const services = await getEnabledServices()
-  
+
   if (services.length === 0) {
     throw new Error('没有可用的翻译服务，请在设置中配置')
   }
@@ -1030,7 +971,9 @@ export async function translate(text: string, targetLang: string = 'zh-CN'): Pro
   }
 
   // 所有服务都失败
-  throw new Error(`所有翻译服务都失败了。最后的错误: ${lastError?.message || 'Unknown error'}`)
+  throw new Error(
+    `所有翻译服务都失败了。最后的错误: ${lastError?.message || 'Unknown error'}`
+  )
 }
 
 /**
@@ -1041,7 +984,7 @@ export async function testTranslationService(
   targetLang: string = 'zh-CN'
 ): Promise<{ success: boolean; message: string; result?: string }> {
   const testText = 'Hello'
-  
+
   try {
     const result = await translateWithService(service, testText, targetLang)
     return {

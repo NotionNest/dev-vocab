@@ -143,7 +143,10 @@ chrome.runtime.onMessage.addListener(
           // 根据是否请求详细信息使用不同的翻译方法
           if (request.detailed) {
             // 返回详细的翻译结果（包含音标、定义等）
-            const detailedResult = await translateDetailed(request.text, targetLang)
+            const detailedResult = await translateDetailed(
+              request.text,
+              targetLang
+            )
             sendResponse({ success: true, result: detailedResult })
           } else {
             // 返回简单的文本翻译
@@ -179,6 +182,18 @@ if (chrome.contextMenus && chrome.contextMenus.onClicked) {
   console.warn('⚠️ contextMenus API 不可用，跳过右键菜单监听')
 }
 
+let currentWindowId: number | null = null
+chrome.windows.onFocusChanged.addListener(winId => {
+  if (winId !== chrome.windows.WINDOW_ID_NONE) {
+    currentWindowId = winId
+  }
+})
+
+/**
+ * 侧边面板打开状态
+ */
+let isSidePanelOpen = false
+
 /**
  * 监听快捷键
  * @param {string} command - 命令
@@ -209,6 +224,23 @@ chrome.commands.onCommand.addListener(async (command: string) => {
       chrome.tabs.sendMessage(tab.id, { action: 'addToWordbook' })
     } catch (error) {
       console.error('发送消息时出错:', error)
+    }
+  }
+  if (command === 'toggle_sidepanel') {
+    console.log('快捷键触发：Ctrl+Shift+L')
+    if (isSidePanelOpen) {
+      chrome.sidePanel.setOptions({
+        enabled: false,
+        path: 'src/sidepanel/blank.html',
+      })
+      isSidePanelOpen = false
+    } else {
+      chrome.sidePanel.setOptions({
+        enabled: true,
+        path: 'src/sidepanel/index.html',
+      })
+      currentWindowId && chrome.sidePanel.open({ windowId: currentWindowId })
+      isSidePanelOpen = true
     }
   }
 })

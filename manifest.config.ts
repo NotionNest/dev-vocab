@@ -49,5 +49,12 @@ export default defineManifest({
       },
       description: '将选定的单词添加到单词本',
     },
+    'toggle_sidepanel': {
+      suggested_key: {
+        default: 'Ctrl+Shift+L',
+        mac: 'Command+Shift+L',
+      },
+      description: '打开侧边栏',
+    },
   },
 })

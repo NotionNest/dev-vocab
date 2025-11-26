@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { ThemeContext, useThemeProvider } from '@/hooks/useTheme'
-import PopupCard2 from '../components/PopupCard'
+import PopupCard from '../components/popupCard'
 
 interface AppProps {
   shadowRoot: HTMLElement
@@ -21,7 +21,7 @@ function App({ shadowRoot }: AppProps) {
   
   return (
     <ThemeContext.Provider value={themeValue}>
-      <PopupCard2 />
+      <PopupCard />
     </ThemeContext.Provider>
   )
 }

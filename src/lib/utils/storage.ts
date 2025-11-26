@@ -1,4 +1,5 @@
-import { TranslationService, BUILT_IN_SERVICES } from './translate'
+import { TranslationService } from '@/types/translation'
+import { BUILT_IN_SERVICES } from './translate'
 
 export const DEFAULT_SYNC_CONFIG = {
   flotingBtn: true,

@@ -1,4 +1,4 @@
-import { Moon, Sun, X, Zap } from 'lucide-react'
+import { Moon, PanelLeft, Sun, X, Zap } from 'lucide-react'
 import SettingCard from '../components/SettingCard'
 import { useTheme } from '@/hooks/useTheme'
 
@@ -46,6 +46,11 @@ export default function General() {
               name: '关闭弹窗',
               shortcut: 'Esc',
               icon: <X size={16} />,
+            },
+            {
+              name: '切换侧边栏',
+              shortcut: 'Ctrl+Shift+L',
+              icon: <PanelLeft size={16} />,
             },
           ].map(item => (
             <div

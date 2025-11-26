@@ -1,45 +1,18 @@
-// ==================== 类型定义 ====================
+import {
+  MessageAction,
+  ChromeMessage,
+  MessageResponse,
+  TranslateRequest,
+  TranslateResponse,
+} from '@/types/messaging'
 
-/**
- * 消息动作类型
- */
-export type MessageAction = 
-  | 'translate'
-  | 'openOptionsPage'
-  | 'addToWordbook'
-  | 'getLocalState'
-  | 'openTab'
-
-/**
- * 消息接口
- */
-export interface ChromeMessage {
-  action: MessageAction
-  [key: string]: any
-}
-
-/**
- * 消息响应接口
- */
-export interface MessageResponse<T = any> {
-  success: boolean
-  result?: T
-  error?: string
-}
-
-/**
- * 翻译请求
- */
-export interface TranslateRequest extends ChromeMessage {
-  action: 'translate'
-  text: string
-}
-
-/**
- * 翻译响应
- */
-export interface TranslateResponse extends MessageResponse<string> {
-  result?: string
+// 重新导出供外部使用
+export type {
+  MessageAction,
+  ChromeMessage,
+  MessageResponse,
+  TranslateRequest,
+  TranslateResponse,
 }
 
 // ==================== Tab 相关工具 ====================

@@ -1,45 +1,13 @@
-import { Classification, classifySelection } from './word'
+import { classifySelection } from './word'
+import { sendMessage } from './chrome'
+import type { ExtensionMessage, WordPopupPayload } from '@/types/messaging'
+import { WORD_POPUP_EVENT } from '@/types/messaging'
+import { TranslationResult } from './translate'
+import { getContextFromSelection } from './word'
 
-type ChangeBackgroundMessage = {
-  action: 'changeBackground'
-}
-
-type PingMessage = {
-  action: 'ping'
-}
-
-type AddToWordbookMessage = {
-  action: 'addToWordbook'
-  text: string
-}
-
-export type ExtensionMessage =
-  | ChangeBackgroundMessage
-  | PingMessage
-  | AddToWordbookMessage
-
-export type WordPopupPayload = {
-  classification: Classification
-  content: string // 内容
-  context: string // 上下文句子
-  definition?: string // 释义
-  source?: string // 来源
-  position?: { x: number; y: number } // 位置
-  error?: string // 错误信息
-  // 详细翻译信息
-  phonetic?: string // 音标
-  phoneticUs?: string // 美式音标
-  phoneticUk?: string // 英式音标
-  definitions?: Array<{
-    partOfSpeech: string
-    meanings: string[]
-  }>
-  examples?: string[] // 例句
-  synonyms?: string[] // 同义词
-  alternativeTranslations?: string[] // 备选翻译
-}
-
-export const WORD_POPUP_EVENT = 'devvocab:showPopup'
+// 重新导出供外部使用
+export type { ExtensionMessage, WordPopupPayload }
+export { WORD_POPUP_EVENT }
 
 /**
  * 派发单词弹窗事件。
@@ -47,38 +15,6 @@ export const WORD_POPUP_EVENT = 'devvocab:showPopup'
  */
 const dispatchPopupEvent = (detail: WordPopupPayload) => {
   window.dispatchEvent(new CustomEvent(WORD_POPUP_EVENT, { detail }))
-}
-
-/**
- * 从 selection 中提取上下文句子。
- * @param selection - 要提取上下文句子的 selection 对象。
- * @returns 上下文句子字符串。
- */
-const extractContextSentence = (selection: Selection): string => {
-  if (selection.rangeCount === 0) {
-    return ''
-  }
-
-  const range = selection.getRangeAt(0)
-  const container = range.startContainer
-  const textContent =
-    (container.nodeType === Node.TEXT_NODE
-      ? container.textContent
-      : container.textContent) ?? ''
-
-  if (!textContent) {
-    return ''
-  }
-
-  const startBoundary = Math.max(
-    0,
-    textContent.lastIndexOf('.', Math.max(range.startOffset - 1, 0)) + 1
-  )
-  const endBoundaryRaw = textContent.indexOf('.', range.endOffset)
-  const endBoundary =
-    endBoundaryRaw === -1 ? textContent.length : endBoundaryRaw + 1
-
-  return textContent.slice(startBoundary, endBoundary).trim()
 }
 
 /**
@@ -105,19 +41,14 @@ export const handleRuntimeMessage = (
 
     if (!selection || !text) return
 
+    // 判断选择的是句子还是单词
     const classification = classifySelection(text)
-
-    // 获取上下文句子
-    const context =
-      extractContextSentence(selection) ??
-      selection?.anchorNode?.textContent?.trim() ??
-      ''
-
+    // 获取上下文句子（使用智能降级策略）
+    const context = getContextFromSelection(selection)
     // 获取选中文本的 DOM 元素和位置
     if (!selection || selection.rangeCount === 0) return
     const range = selection.getRangeAt(0)
     const rect = range.getBoundingClientRect()
-
     const position = {
       x: rect.left + rect.width / 2,
       y: rect.bottom + 10,
@@ -126,89 +57,72 @@ export const handleRuntimeMessage = (
     // 判断选择的是句子还是单词，用来展示不同的逻辑弹窗
     dispatchPopupEvent({
       classification: classification,
-      content: text,
+      original: text,
       context,
-      definition: '',
       source: window.location.hostname,
       position,
+      text: '',
     })
 
     // 使用 async/await 风格进行翻译（获取详细信息）
     ;(async () => {
       try {
-        // 动态导入翻译函数
-        const { sendMessage } = await import('./chrome')
-        
-        console.log('开始翻译:', text)
-        
-        // 定义翻译结果类型
-        interface DetailedResult {
-          text: string
-          phonetic?: string
-          phoneticUs?: string
-          phoneticUk?: string
-          definitions?: Array<{ partOfSpeech: string; meanings: string[] }>
-          examples?: string[]
-          synonyms?: string[]
-          alternativeTranslations?: string[]
-        }
-        
+        console.log('[Content Script] 开始翻译:', text)
         // 发送翻译请求，请求详细信息
-        const response = await sendMessage<DetailedResult | string>({
+        const response = await sendMessage<WordPopupPayload | string>({
           action: 'translate',
           text: text,
           detailed: true, // 请求详细信息
         })
-        
-        console.log('翻译成功，结果:', response.result)
-        
+
+        console.log('[Content Script] 翻译成功，结果:', response.result)
+
         // 检查是否是详细翻译结果
         const result = response.result
-        
+
         if (result && typeof result === 'object' && 'text' in result) {
           // 详细翻译结果
-          const detailedResult = result as DetailedResult
+          const detailedResult = result as TranslationResult
+          console.log('详细翻译结果', detailedResult)
+
           dispatchPopupEvent({
             classification: classification,
-            content: text,
-            context,
-            definition: detailedResult.text || '翻译完成',
-            phonetic: detailedResult.phonetic,
-            phoneticUs: detailedResult.phoneticUs,
-            phoneticUk: detailedResult.phoneticUk,
-            definitions: detailedResult.definitions,
-            examples: detailedResult.examples,
-            synonyms: detailedResult.synonyms,
-            alternativeTranslations: detailedResult.alternativeTranslations,
-            source: window.location.hostname,
             position,
+            context,
+            source: window.location.hostname,
+            ...detailedResult,
           })
         } else {
           // 简单文本结果（降级处理）
+          console.log('[Content Script] 简单文本结果:', result)
           dispatchPopupEvent({
             classification: classification,
-            content: text,
+            original: text,
             context,
-            definition: (result as string) || '翻译完成',
             source: window.location.hostname,
             position,
+            text: result as string,
           })
         }
       } catch (error) {
-        console.error('翻译失败:', error)
+        console.error('[Content Script] 翻译失败:', error)
         // 显示错误信息
         dispatchPopupEvent({
           classification: classification,
-          content: text,
+          original: text,
           context,
-          definition: `翻译失败: ${(error as Error).message || '未知错误'}`,
           source: window.location.hostname,
           position,
+          text: '',
+          error: (error as Error).message,
         })
       }
     })()
 
+    // 注意：这里的 sendResponse 是对 addToWordbook 消息的响应
+    // 翻译是在 IIFE 中异步进行的，不需要等待
     sendResponse({ success: true })
-    return
   }
+
+ 
 }
