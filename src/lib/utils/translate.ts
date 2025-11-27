@@ -268,6 +268,7 @@ async function translateWithGoogleDetailed(
     original: text,
     sourceLanguage: data[2] || 'auto',
     targetLanguage: targetLang,
+    definitions: [],
   }
 
   // 1. 提取主要翻译
@@ -831,6 +832,7 @@ export async function translateWithServiceDetailed(
     text: translatedText,
     original: text,
     targetLanguage: targetLang,
+    definitions: [],
   }
 }
 

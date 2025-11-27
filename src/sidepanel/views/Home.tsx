@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Tabs, TabsContent } from '@/components/Tabs'
 import { useNavigate } from 'react-router-dom'
 import ReviewModal2 from '../components/ReviewModal2'
-import { getVocabularyEntries, VocabularyEntry } from '@/lib/utils/vocabulary'
+import { vocabDB } from '@/lib/db/operations'
 
 const TABS = [
   {
@@ -23,22 +23,23 @@ const TABS = [
 export default function Home() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('all')
-  const [vocabularyEntries, setVocabularyEntries] = useState<VocabularyEntry[]>(
+  const [vocabularyEntries, setVocabularyEntries] = useState<any[]>(
     []
   )
 
-  useEffect(() => {
-    getVocabularyEntries().then(res => {
-      console.log('res', res)
+  const getAllWords = async () => {
+    const res = await vocabDB.getAllWords()
+    console.log('res', res);
+    
+    setVocabularyEntries(res)
+  }
 
-      setVocabularyEntries(res)
-    })
+  useEffect(() => {
+    getAllWords()
 
     chrome.runtime.onMessage.addListener(message => {
       if (message.action === 'updateVocabulary') {
-        getVocabularyEntries().then(res => {
-          setVocabularyEntries(res)
-        })
+        getAllWords()
       }
     })
   }, [])
@@ -88,9 +89,9 @@ export default function Home() {
                   </div>
 
                   <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                    {/* <span>遇到: {item.count} 次</span> */}
+                    <span>遇到: {item.count} 次</span>
                     <span className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
-                    <span>上次遇到: {item.savedAt.split('T')[0]}</span>
+                    <span>上次遇到: {item.lastEncounteredAt.split('T')[0]}</span>
                   </div>
                 </div>
 

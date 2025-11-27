@@ -1,3 +1,4 @@
+import { dbOperations, vocabDB } from '@/lib/db/operations'
 import {
   DEFAULT_LOCAL_STATE,
   DEFAULT_SYNC_CONFIG,
@@ -6,12 +7,8 @@ import {
   updateLocalState,
 } from '@/lib/utils/storage'
 import { translate, translateDetailed } from '@/lib/utils/translate'
-import {
-  getVocabularyEntries,
-  saveVocabularyEntries,
-  VocabularyEntry,
-} from '@/lib/utils/vocabulary'
 import { WordPopupPayload } from '@/types'
+import { v4 as uuidv4 } from 'uuid'
 
 type BackgroundMessage =
   | { action: 'getLocalState' }
@@ -19,6 +16,7 @@ type BackgroundMessage =
   | { action: 'addToVocabulary'; detail: WordPopupPayload }
   | { action: 'openOptionsPage' }
   | { action: 'translate'; text: string; detailed?: boolean }
+  | { action: 'getWordByOriginal'; original: string }
 
 /**
  * 创建右键菜单项
@@ -133,36 +131,64 @@ chrome.runtime.onMessage.addListener(
     if (request.action === 'addToVocabulary' && request.detail) {
       ;(async () => {
         try {
-          const existingEntries = await getVocabularyEntries()
-          const newEntry: VocabularyEntry = {
-            ...request.detail,
-            savedAt: new Date().toISOString(),
-            id: new Date().getTime().toString(),
-          }
-
-          const duplicateIndex = existingEntries.findIndex(
-            entry =>
-              entry.original === newEntry.original &&
-              entry.source === newEntry.source
-          )
-          const updatedEntries =
-            duplicateIndex > -1
-              ? existingEntries.map((entry, index) =>
-                  index === duplicateIndex ? newEntry : entry
-                )
-              : [newEntry, ...existingEntries]
-
-          await saveVocabularyEntries(updatedEntries)
-          // await syncVocabularyToRemote(newEntry)
-
+          await vocabDB.addWord({
+            id: uuidv4(),
+            original: request.detail.original,
+            text: request.detail.text,
+            phonetic: request.detail.phonetic,
+            alternativeTranslations:
+              request.detail.alternativeTranslations || [],
+            contexts: [
+              {
+                id: uuidv4(),
+                source: request.detail.source,
+                content: request.detail.context,
+              },
+            ],
+            definitions: request.detail.definitions,
+            examples: request.detail.examples,
+            count: 1,
+            lastEncounteredAt: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+          })
+          sendResponse({ success: true })
           // 通知侧边栏触发更新
           chrome.runtime.sendMessage({ action: 'updateVocabulary' })
-
-          sendResponse({ success: true, data: newEntry })
         } catch (error) {
           console.error('保存单词失败:', error)
           sendResponse({ success: false, error: (error as Error).message })
         }
+        // try {
+        //   const existingEntries = await getVocabularyEntries()
+        //   const newEntry: VocabularyEntry = {
+        //     ...request.detail,
+        //     savedAt: new Date().toISOString(),
+        //     id: new Date().getTime().toString(),
+        //   }
+
+        //   const duplicateIndex = existingEntries.findIndex(
+        //     entry =>
+        //       entry.original === newEntry.original &&
+        //       entry.source === newEntry.source
+        //   )
+        //   const updatedEntries =
+        //     duplicateIndex > -1
+        //       ? existingEntries.map((entry, index) =>
+        //           index === duplicateIndex ? newEntry : entry
+        //         )
+        //       : [newEntry, ...existingEntries]
+
+        //   await saveVocabularyEntries(updatedEntries)
+        //   // await syncVocabularyToRemote(newEntry)
+
+        //   // 通知侧边栏触发更新
+        //   chrome.runtime.sendMessage({ action: 'updateVocabulary' })
+
+        //   sendResponse({ success: true, data: newEntry })
+        // } catch (error) {
+        //   console.error('保存单词失败:', error)
+        //   sendResponse({ success: false, error: (error as Error).message })
+        // }
       })()
 
       return true
@@ -196,6 +222,19 @@ chrome.runtime.onMessage.addListener(
       })()
 
       return true // 保持消息通道打开
+    }
+
+    if (request.action === 'getWordByOriginal' && request.original) {
+      ;(async () => {
+        try {
+          const word = await dbOperations.getWordByOriginal(request.original)
+          sendResponse({ success: true, word })
+        } catch (error) {
+          console.error('获取单词失败:', error)
+          sendResponse({ success: false, error: (error as Error).message })
+        }
+      })()
+      return true
     }
 
     return false
@@ -293,12 +332,12 @@ chrome.runtime.onConnect.addListener(port => {
     port.onMessage.addListener(message => {
       // 可以在这里处理 HMR 消息
       if (message.type === 'connected') {
-        console.log('[HMR] Client connected')
+        // console.log('[HMR] Client connected')
       }
     })
 
     port.onDisconnect.addListener(() => {
-      console.log('[HMR] Client disconnected')
+      // console.log('[HMR] Client disconnected')
     })
   }
 })

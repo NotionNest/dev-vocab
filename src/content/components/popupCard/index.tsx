@@ -1,35 +1,48 @@
 import { WORD_POPUP_EVENT, WordPopupPayload } from '@/lib/utils/messaging'
 import { useEffect, useRef, useState } from 'react'
-import { CornerDownLeft, Link } from 'lucide-react'
+import { CornerDownLeft } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import CardHeard from './CardHeard'
 import styles from './index.css?inline'
 import WordContent from './WordContent'
-import { cn } from '@/lib/utils'
 import SentenceContent from './SentenceContent'
+import WordContext from '@/components/WordContext'
+import { WordItem } from '@/lib/db/schema'
 
 export default function PopupCard2() {
   const [show, setShow] = useState(false)
   const [payload, setPayLoad] = useState<WordPopupPayload | null>(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [isContextExpanded, setIsContextExpanded] = useState(false)
   const [selectedWordLength, setSelectedWordLength] = useState(0)
-  const contextRef = useRef<HTMLDivElement>(null)
   const cardRef = useRef<HTMLDivElement | null>(null)
+  const [isReviewing, setIsReviewing] = useState(false)
 
   // 使用自定义 Hook 防止滚动穿透
   useScrollLock(cardRef, show)
 
   useEffect(() => {
-    const handlePopup = (event: Event) => {
+    const handlePopup = async (event: Event) => {
       const detail = (event as CustomEvent<WordPopupPayload>).detail
-      console.log('detail', detail)
-      setPayLoad(detail)
-      if (detail.position) {
-        setPosition(detail.position)
-      }
+      // 判断是否已经在单词本中
 
-      setIsContextExpanded(false)
+      chrome.runtime.sendMessage(
+        {
+          action: 'getWordByOriginal',
+          original: detail.original,
+        },
+        (response: { success: boolean; word: WordItem | null }) => {
+          console.log('response', response)
+          if (response.success && response.word) {
+            setIsReviewing(true)
+            setPayLoad(response.word as unknown as WordPopupPayload)
+          } else {
+            setIsReviewing(false)
+            setPayLoad(detail)
+          }
+        }
+      )
+
+      setPosition(detail.position || { x: 0, y: 0 })
       setShow(true)
     }
 
@@ -75,7 +88,7 @@ export default function PopupCard2() {
     if (!show) return
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter') return
+      if (event.key !== 'Enter' || isReviewing) return
       const canAddWord =
         payload?.classification === 'word' && Boolean(payload?.original)
       if (!canAddWord) return
@@ -109,7 +122,7 @@ export default function PopupCard2() {
     >
       <style>{styles}</style>
       {/* Header */}
-      <CardHeard setShow={setShow} />
+      <CardHeard setShow={setShow} classification={payload?.classification} />
 
       {/* Content */}
       <div className="px-5 max-h-[300px] overflow-y-auto">
@@ -124,36 +137,14 @@ export default function PopupCard2() {
         )}
 
         {/* Context */}
-        <div className="text-sm bg-gray-100 overflow-hidden dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md p-2 mt-4 relative group">
-          <div className="context-side"></div>
-          <div
-            ref={contextRef}
-            className={`wrap-break-word transition-all duration-200 ${
-              !isContextExpanded ? 'line-clamp-3 overflow-hidden' : ''
-            }`}
-            onClick={() => setIsContextExpanded(!isContextExpanded)}
-          >
-            <div className="text-xs italic text-gray-700 dark:text-gray-300">
-              {payload?.context.split(' ').map((item, index) => (
-                <span
-                  key={`context-${index}-${item}`}
-                  className={cn(
-                    item.toLowerCase() === payload?.original?.toLowerCase()
-                      ? 'text-sky-600 dark:text-sky-400'
-                      : ''
-                  )}
-                >
-                  {item}{' '}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="flex items-center gap-1 mt-2">
-            <Link size={12} />
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              {payload?.source}
-            </p>
-          </div>
+        <div className="mt-4">
+          {payload?.context && payload?.source && payload?.original && (
+            <WordContext
+              context={payload?.context}
+              source={payload?.source}
+              original={payload?.original}
+            />
+          )}
         </div>
       </div>
       {/* Footer */}
@@ -161,9 +152,10 @@ export default function PopupCard2() {
         <button
           type="button"
           disabled={
-            payload?.classification === 'word'
-              ? !payload?.original
-              : selectedWordLength === 0
+            isReviewing ||
+            (payload?.classification === 'word'
+              ? !payload?.text
+              : selectedWordLength === 0)
           }
           onClick={() => {
             if (payload?.classification === 'word') {
@@ -173,7 +165,10 @@ export default function PopupCard2() {
           className="w-full rounded-md bg-sky-600 dark:bg-sky-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-sky-500 dark:hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 dark:focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <span className="flex items-center justify-center gap-1">
-            {selectedWordLength > 0 ? `Add ${selectedWordLength} Words` : 'Add to Vocabulary'} <CornerDownLeft size={14} />
+            {selectedWordLength > 0
+              ? `Add ${selectedWordLength} Words`
+              : 'Add to Vocabulary'}{' '}
+            <CornerDownLeft size={14} />
           </span>
         </button>
       </div>
