@@ -64,12 +64,12 @@ export default function General() {
               <div className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300">
                 {item.shortcut.split('+').map((item, index) => {
                   return (
-                    <>
+                    <div key={item}>
                       {index > 0 && <span>+</span>}
                       <span className="border border-gray-300 dark:border-gray-600 px-1 bg-white dark:bg-gray-700" key={item}>
                         {item}
                       </span>
-                    </>
+                    </div>
                   )
                 })}
               </div>

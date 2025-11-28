@@ -1,13 +1,26 @@
 import { Settings, X } from 'lucide-react'
+import { MouseEvent } from 'react'
 
 interface CardHeardProps {
   setShow: (show: boolean) => void
   classification?: 'word' | 'sentence' | 'empty'
+  onDragStart?: (e: MouseEvent) => void
+  isDragging?: boolean
 }
 
-export default function CardHeard({ setShow, classification }: CardHeardProps) {
+export default function CardHeard({
+  setShow,
+  classification,
+  onDragStart,
+  isDragging,
+}: CardHeardProps) {
   return (
-    <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
+    <div
+      className={`flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 ${
+        isDragging ? 'cursor-grabbing' : 'cursor-move'
+      } select-none`}
+      onMouseDown={onDragStart}
+    >
       <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
         {classification === 'word' ? 'Word Selection' : 'Sentence Selection'}
       </div>

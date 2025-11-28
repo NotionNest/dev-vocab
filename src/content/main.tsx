@@ -7,7 +7,7 @@ import {
 } from '@/lib/utils/messaging.ts'
 import tailwindStyles from '@/assets/style/tailwind.css?inline'
 
-console.log('[CRXJS] Hello world from content script!')
+console.log('devvocab content script loaded')
 
 /**
  * 监听来自 background service worker 或 popup 发送到 content script 的消息
@@ -78,8 +78,6 @@ const injectReactComponent = () => {
     shadowWrapper.id = SHADOW_WRAPPER_ID
     shadowContainer.appendChild(shadowWrapper)
   }
-  console.log('shadowWrapper', shadowWrapper)
-
   let root = shadowWrapper.__devvocabRoot
   if (!root) {
     root = createRoot(shadowWrapper)
