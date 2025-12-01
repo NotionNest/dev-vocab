@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import dayjs from 'dayjs'
 import { Link } from 'lucide-react'
 import { useRef, useState } from 'react'
 
@@ -17,7 +18,7 @@ export default function WordContext({
   const [isContextExpanded, setIsContextExpanded] = useState(false)
 
   return (
-    <div className="text-sm bg-gray-100 overflow-hidden dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md p-2 pl-3 relative group">
+    <div className="text-sm bg-gray-100 overflow-hidden dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md p-2 pl-3 relative group mb-2">
       <div className="absolute top-0 left-0 w-1 h-full bg-sky-600 dark:bg-sky-400"></div>
       <div
         ref={contextRef}
@@ -50,7 +51,7 @@ export default function WordContext({
           {
             createdAt && (
               <div className="text-xs text-gray-500 dark:text-gray-400">
-                {createdAt}
+                {dayjs(createdAt).format('YYYY/MM/DD HH:mm:ss')}
               </div>
             )
           }

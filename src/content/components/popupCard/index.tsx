@@ -26,6 +26,8 @@ export default function PopupCard2() {
   } | null>(null)
   const rafIdRef = useRef<number | null>(null)
   const currentPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
+  const [context, setContext] = useState('')
+  const [source, setSource] = useState('')
 
   // 使用自定义 Hook 防止滚动穿透
   useScrollLock(cardRef, show)
@@ -71,7 +73,8 @@ export default function PopupCard2() {
   useEffect(() => {
     const handlePopup = async (event: Event) => {
       const detail = (event as CustomEvent<WordPopupPayload>).detail
-      // 判断是否已经在单词本中
+      setContext(detail.context || '')
+      setSource(detail.source || '')
 
       // 保存初始位置
       const initialPos = detail.position || { x: 0, y: 0 }
@@ -80,13 +83,13 @@ export default function PopupCard2() {
       // 先设置初始位置
       positionDetection(initialPos)
 
+      // 判断是否已经在单词本中
       chrome.runtime.sendMessage(
         {
           action: 'getWordByOriginal',
           original: detail.original,
         },
         (response: { success: boolean; word: WordItem | null }) => {
-          console.log('response', response)
           if (response.success && response.word) {
             setIsReviewing(true)
             setPayLoad(response.word as unknown as WordPopupPayload)
@@ -277,9 +280,7 @@ export default function PopupCard2() {
       if (path.includes(cardRef.current)) {
         return
       }
-      if (payload && 'id' in payload) {
-        chrome.runtime.sendMessage({ action: 'increaseCount', id: payload.id })
-      }
+
       setShow(false)
     }
 
@@ -288,6 +289,17 @@ export default function PopupCard2() {
       window.removeEventListener('mousedown', handleMouseDown)
     }
   }, [show, isDragging])
+
+  useEffect(() => {
+    if (!show && payload && 'id' in payload) {
+      chrome.runtime.sendMessage({
+        action: 'increaseCount',
+        id: payload.id,
+        context,
+        source,
+      })
+    }
+  }, [show])
 
   if (!show) return null
 

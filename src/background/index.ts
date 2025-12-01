@@ -17,7 +17,7 @@ type BackgroundMessage =
   | { action: 'openOptionsPage' }
   | { action: 'translate'; text: string; detailed?: boolean }
   | { action: 'getWordByOriginal'; original: string }
-  | { action: 'increaseCount'; id: string }
+  | { action: 'increaseCount'; id: string; context: string; source: string }
 
 /**
  * 创建右键菜单项
@@ -143,7 +143,8 @@ chrome.runtime.onMessage.addListener(
               {
                 id: uuidv4(),
                 source: request.detail.source,
-                content: request.detail.context,
+                content: `${request.detail.context} - ${await translate(request.detail.context, 'zh-CN')}`,
+                createdAt: new Date().toISOString(),
               },
             ],
             definitions: request.detail.definitions,
@@ -209,8 +210,10 @@ chrome.runtime.onMessage.addListener(
 
     if (request.action === 'increaseCount' && request.id) {
       ;(async () => {
+        const context = `${request.context} - ${await translate(request.context, 'zh-CN')}` 
+        const source = request.source || ''
         try {
-          await dbOperations.increaseCount(request.id)
+          await dbOperations.increaseCount(request.id, context, source)
           sendResponse({ success: true })
           chrome.runtime.sendMessage({ action: 'updateVocabulary' })
         } catch (error) {

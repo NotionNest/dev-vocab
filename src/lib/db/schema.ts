@@ -10,7 +10,7 @@ export interface WordItem {
   text: string // 翻译
   phonetic?: string // 音标
   alternativeTranslations: string[] // 其他可能的翻译
-  contexts: { id: string; source: string; content: string }[] // 上下文
+  contexts: { id: string; source: string; content: string, createdAt: string }[] // 上下文
   definitions: Definition[] | undefined // 释义
   examples: string[] | undefined // 例句
   count: number // 遇到次数

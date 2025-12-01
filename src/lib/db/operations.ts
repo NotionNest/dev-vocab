@@ -1,5 +1,6 @@
 import { dbInstance } from './index'
 import { WordItem } from './schema'
+import { v4 as uuidv4 } from 'uuid'
 
 export const vocabDB = {
   async addWord(item: WordItem) {
@@ -79,9 +80,27 @@ export const dbOperations = {
   },
 
   // 增加遇到次数
-  async increaseCount(id: string) {
+  async increaseCount(id: string, context: string, source: string) {
     const word = await vocabDB.getWordById(id)
     if (!word) throw new Error('Word not found')
-    await vocabDB.updateWord(id, { count: word.count + 1 })
+    const lastEncounteredAt = new Date().toISOString()
+    // 如果 context 已经存在，则不添加content
+    if (word.contexts.some(c => c.content === context)) {
+      await vocabDB.updateWord(id, { count: word.count + 1, lastEncounteredAt })
+    } else {
+      await vocabDB.updateWord(id, {
+        count: word.count + 1,
+        lastEncounteredAt,
+        contexts: [
+          ...word.contexts,
+          {
+            id: uuidv4(),
+            source,
+            content: context,
+            createdAt: new Date().toISOString(),
+          },
+        ],
+      })
+    }
   },
 }

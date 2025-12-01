@@ -18,13 +18,13 @@ export default function Layout() {
             onClick={() => {
               chrome.runtime.sendMessage({ action: 'openOptionsPage' })
             }}
-            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="text-gray-700 cursor-pointer dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
           >
             <Settings size={16} />
           </button>
           <button
             onClick={toggleTheme}
-            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            className="text-gray-700 cursor-pointer dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
           >
             {isDark ? <Sun size={16} /> : <Moon size={16} />}
           </button>

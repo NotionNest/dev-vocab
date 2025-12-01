@@ -65,8 +65,8 @@ export default function DetailWord() {
   }
 
   return (
-    <div className="px-4 py-2 h-full flex flex-col bg-white dark:bg-gray-900">
-      <div className="flex-1 overflow-y-auto">
+    <div className="scroll-smoothbar py-2 h-full flex flex-col bg-white dark:bg-gray-900">
+      <div className="flex-1 overflow-y-auto px-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <ArrowLeft
@@ -125,16 +125,20 @@ export default function DetailWord() {
                 context={context.content}
                 source={context.source}
                 original={word.original}
+                createdAt={context.createdAt}
               />
             )
           })}
         </div>
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-10">
+          添加时间: {dayjs(word.createdAt).format('YYYY/MM/DD')}
+        </div>
       </div>
 
       {/* 分页 */}
-      <div className="flex items-center justify-between mt-4 py-2">
+      <div className="px-4 flex items-center justify-between mt-4 py-2">
         <button
-          className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           disabled={currentIndex <= 1}
           onClick={() => handlePageChange(currentIndex - 2)}
         >
@@ -150,7 +154,7 @@ export default function DetailWord() {
         </div>
 
         <button
-          className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1 text-sm text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md p-1 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
           disabled={currentIndex >= vocabularyEntries.length}
           onClick={() => handlePageChange(currentIndex)}
         >
@@ -160,7 +164,7 @@ export default function DetailWord() {
       </div>
 
       {/* footer */}
-      <div>
+      <div className="px-4">
         <div className="flex items-center justify-between gap-2 border-t border-gray-200 dark:border-gray-700 pt-4">
           <div className="flex flex-1 items-center justify-between gap-2">
             <button className="cursor-pointer w-full rounded-md py-2 border border-blue-500 dark:border-blue-600 bg-blue-500/10 dark:bg-blue-600/20 text-blue-500 dark:text-blue-400 flex items-center justify-center gap-2 hover:bg-blue-500/20 dark:hover:bg-blue-600/30 transition-colors">
