@@ -1,19 +1,16 @@
 import { WORD_POPUP_EVENT, WordPopupPayload } from '@/lib/utils/messaging'
 import { useEffect, useRef, useState } from 'react'
-import { CornerDownLeft } from 'lucide-react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import CardHeard from './CardHeard'
 import styles from './index.css?inline'
-import WordContent from './WordContent'
-import SentenceContent from './SentenceContent'
-import WordContext from '@/components/WordContext'
 import { WordItem } from '@/lib/db/schema'
+import WordReview from './wordReview'
+import WordDetail from './wordDetail'
 
 export default function PopupCard2() {
   const [show, setShow] = useState(false)
   const [payload, setPayLoad] = useState<WordPopupPayload | null>(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
-  const [selectedWordLength, setSelectedWordLength] = useState(0)
   const cardRef = useRef<HTMLDivElement | null>(null)
   const [isReviewing, setIsReviewing] = useState(false)
   // 保存初始位置，用于重新计算
@@ -280,6 +277,9 @@ export default function PopupCard2() {
       if (path.includes(cardRef.current)) {
         return
       }
+      if (payload && 'id' in payload) {
+        chrome.runtime.sendMessage({ action: 'increaseCount', id: payload.id })
+      }
       setShow(false)
     }
 
@@ -288,31 +288,6 @@ export default function PopupCard2() {
       window.removeEventListener('mousedown', handleMouseDown)
     }
   }, [show, isDragging])
-
-  const addToVocabulary = () => {
-    console.log('addToVocabulary', payload)
-    chrome.runtime.sendMessage({ action: 'addToVocabulary', detail: payload })
-    setShow(false)
-  }
-
-  useEffect(() => {
-    if (!show) return
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== 'Enter' || isReviewing) return
-      const canAddWord =
-        payload?.classification === 'word' && Boolean(payload?.original)
-      if (!canAddWord) return
-
-      event.preventDefault()
-      addToVocabulary()
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [show, payload])
 
   if (!show) return null
 
@@ -344,54 +319,11 @@ export default function PopupCard2() {
         isDragging={isDragging}
       />
 
-      {/* Content */}
-      <div className="px-5 max-h-[300px] overflow-y-auto">
-        {payload?.classification === 'word' && (
-          <WordContent payload={payload} />
-        )}
-        {payload?.classification === 'sentence' && (
-          <SentenceContent
-            payload={payload}
-            setSelectedWordLength={setSelectedWordLength}
-          />
-        )}
-
-        {/* Context */}
-        <div className="mt-4">
-          {payload?.context && payload?.source && payload?.original && (
-            <WordContext
-              context={payload?.context}
-              source={payload?.source}
-              original={payload?.original}
-            />
-          )}
-        </div>
-      </div>
-      {/* Footer */}
-      <div className="px-5 py-4">
-        <button
-          type="button"
-          disabled={
-            isReviewing ||
-            (payload?.classification === 'word'
-              ? !payload?.text
-              : selectedWordLength === 0)
-          }
-          onClick={() => {
-            if (payload?.classification === 'word') {
-              addToVocabulary()
-            }
-          }}
-          className="w-full rounded-md bg-sky-600 dark:bg-sky-700 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-sky-500 dark:hover:bg-sky-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 dark:focus-visible:ring-sky-500 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          <span className="flex items-center justify-center gap-1">
-            {selectedWordLength > 0
-              ? `Add ${selectedWordLength} Words`
-              : 'Add to Vocabulary'}{' '}
-            <CornerDownLeft size={14} />
-          </span>
-        </button>
-      </div>
+      {isReviewing ? (
+        <WordReview payload={payload} />
+      ) : (
+        <WordDetail payload={payload} closePopupCard={() => setShow(false)} />
+      )}
     </div>
   )
 }

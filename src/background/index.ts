@@ -17,6 +17,7 @@ type BackgroundMessage =
   | { action: 'openOptionsPage' }
   | { action: 'translate'; text: string; detailed?: boolean }
   | { action: 'getWordByOriginal'; original: string }
+  | { action: 'increaseCount'; id: string }
 
 /**
  * 创建右键菜单项
@@ -158,37 +159,6 @@ chrome.runtime.onMessage.addListener(
           console.error('保存单词失败:', error)
           sendResponse({ success: false, error: (error as Error).message })
         }
-        // try {
-        //   const existingEntries = await getVocabularyEntries()
-        //   const newEntry: VocabularyEntry = {
-        //     ...request.detail,
-        //     savedAt: new Date().toISOString(),
-        //     id: new Date().getTime().toString(),
-        //   }
-
-        //   const duplicateIndex = existingEntries.findIndex(
-        //     entry =>
-        //       entry.original === newEntry.original &&
-        //       entry.source === newEntry.source
-        //   )
-        //   const updatedEntries =
-        //     duplicateIndex > -1
-        //       ? existingEntries.map((entry, index) =>
-        //           index === duplicateIndex ? newEntry : entry
-        //         )
-        //       : [newEntry, ...existingEntries]
-
-        //   await saveVocabularyEntries(updatedEntries)
-        //   // await syncVocabularyToRemote(newEntry)
-
-        //   // 通知侧边栏触发更新
-        //   chrome.runtime.sendMessage({ action: 'updateVocabulary' })
-
-        //   sendResponse({ success: true, data: newEntry })
-        // } catch (error) {
-        //   console.error('保存单词失败:', error)
-        //   sendResponse({ success: false, error: (error as Error).message })
-        // }
       })()
 
       return true
@@ -235,6 +205,20 @@ chrome.runtime.onMessage.addListener(
         }
       })()
       return true
+    }
+
+    if (request.action === 'increaseCount' && request.id) {
+      ;(async () => {
+        try {
+          await dbOperations.increaseCount(request.id)
+          sendResponse({ success: true })
+          chrome.runtime.sendMessage({ action: 'updateVocabulary' })
+        } catch (error) {
+          console.error('增加遇到次数失败:', error)
+          sendResponse({ success: false, error: (error as Error).message })
+        }
+      })()
+      sendResponse({ success: true })
     }
 
     return false

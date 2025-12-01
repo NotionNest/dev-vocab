@@ -39,6 +39,7 @@ export default function Home() {
 
     chrome.runtime.onMessage.addListener(message => {
       if (message.action === 'updateVocabulary') {
+        console.log('updateVocabulary')
         getAllWords()
       }
     })

@@ -1,4 +1,4 @@
-import { Settings, X } from 'lucide-react'
+import { CircleQuestionMark, Settings, X } from 'lucide-react'
 import { MouseEvent } from 'react'
 
 interface CardHeardProps {
@@ -21,9 +21,16 @@ export default function CardHeard({
       } select-none`}
       onMouseDown={onDragStart}
     >
-      <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-        {classification === 'word' ? 'Word Selection' : 'Sentence Selection'}
-      </div>
+      {classification ? (
+        <div className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+          {classification === 'word' ? 'Word Selection' : 'Sentence Selection'}
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-xs font-semibold text-sky-600 dark:text-sky-500">
+          <CircleQuestionMark size={16} />
+          <span>记忆检查</span>
+        </div>
+      )}
       <div className="flex items-center gap-4">
         <button
           type="button"

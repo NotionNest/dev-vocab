@@ -36,13 +36,13 @@ export const vocabDB = {
   },
 
   async updateWord(id: string, data: Partial<WordItem>) {
-    const db = await dbInstance.open()
-    const store = db.transaction('vocabs', 'readwrite').objectStore('vocabs')
-
     const old = await this.getWordById(id)
     if (!old) throw new Error('Word not found')
 
     const updated = { ...old, ...data }
+
+    const db = await dbInstance.open()
+    const store = db.transaction('vocabs', 'readwrite').objectStore('vocabs')
 
     return new Promise((resolve, reject) => {
       const req = store.put(updated)
@@ -73,8 +73,15 @@ export const dbOperations = {
 
   // 通过 original 获取
   async getWordByOriginal(original: string): Promise<WordItem | undefined> {
-    const words = await vocabDB.getAllWords()   
+    const words = await vocabDB.getAllWords()
     const word = words.find(word => word.original === original)
     return word
+  },
+
+  // 增加遇到次数
+  async increaseCount(id: string) {
+    const word = await vocabDB.getWordById(id)
+    if (!word) throw new Error('Word not found')
+    await vocabDB.updateWord(id, { count: word.count + 1 })
   },
 }

@@ -77,6 +77,7 @@ export interface WordPopupPayload extends TranslationResult {
   position?: { x: number; y: number } // 弹窗位置
   source: string
   error?: string
+  count?: number
 }
 
 /**

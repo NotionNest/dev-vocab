@@ -32,3 +32,15 @@
   font-weight: bold;
   background-color: #f0f9ff;
 }
+
+.border-gray-300 {
+  border: 1px solid #d1d6db;
+}
+
+.text-gray-700 {
+  color: #364153;
+}
+
+.placeholder:text-gray-400 {
+  color: #9ca3af;
+}
