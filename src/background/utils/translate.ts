@@ -239,6 +239,10 @@ export const BUILT_IN_SERVICES: Omit<TranslationService, 'configured'>[] = [
 
 /**
  * Google Translate 翻译（增强版，获取详细信息）
+ * @param text - 要翻译的文本
+ * @param targetLang - 目标语言
+ * @param _config - 配置
+ * @returns Promise<TranslationResult> - 翻译结果
  */
 async function translateWithGoogleDetailed(
   text: string,
@@ -264,8 +268,8 @@ async function translateWithGoogleDetailed(
   // data[13]: 例句
 
   const result: TranslationResult = {
-    text: '',
-    original: text,
+    originalText: text,
+    translatedText: '',
     sourceLanguage: data[2] || 'auto',
     targetLanguage: targetLang,
     definitions: [],
@@ -273,7 +277,7 @@ async function translateWithGoogleDetailed(
 
   // 1. 提取主要翻译
   if (data[0] && Array.isArray(data[0])) {
-    result.text = data[0]
+    result.translatedText = data[0]
       .filter((item: any) => item && item[0])
       .map((item: any) => item[0])
       .join('')
@@ -281,7 +285,7 @@ async function translateWithGoogleDetailed(
 
   // 2. 提取音标（如果有）
   if (data[0] && data[0][1] && data[0][1][3]) {
-    result.phonetic = data[0][1][3]
+    result.pronunciation = data[0][1][3]
   }
 
   // 3. 提取词典定义（按词性分类）
@@ -329,7 +333,7 @@ async function translateWithGoogleDetailed(
 
   console.log('Google Translate 结果:', result)
 
-  if (!result.text) {
+  if (!result.translatedText) {
     throw new Error('Google Translate 返回数据格式错误')
   }
 
@@ -345,7 +349,7 @@ async function translateWithGoogle(
   config: APIConfig
 ): Promise<string> {
   const result = await translateWithGoogleDetailed(text, targetLang, config)
-  return result.text
+  return result.translatedText
 }
 
 /**
@@ -829,8 +833,8 @@ export async function translateWithServiceDetailed(
   // 其他服务降级为简单翻译，包装成 TranslationResult
   const translatedText = await translateWithService(service, text, targetLang)
   return {
-    text: translatedText,
-    original: text,
+    translatedText: translatedText,
+    originalText: text,
     targetLanguage: targetLang,
     definitions: [],
   }

@@ -4,6 +4,10 @@ const DB_VERSION = 1
 export class DB {
   private db: IDBDatabase | null = null
 
+  /**
+   * 打开数据库
+   * @returns Promise<IDBDatabase> - 返回数据库实例
+   */
   open() {
     return new Promise<IDBDatabase>((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, DB_VERSION)
@@ -21,6 +25,7 @@ export class DB {
         // 创建 vocab 表 (key 为 id)
         if (!db.objectStoreNames.contains('vocabs')) {
           const store = db.createObjectStore('vocabs', { keyPath: 'id' })
+          // 创建索引
           store.createIndex('text', 'text', { unique: false })
           store.createIndex('createdAt', 'createdAt', { unique: false })
         }
@@ -28,6 +33,12 @@ export class DB {
     })
   }
 
+  /**
+   * 获取存储对象
+   * @param storeName - 存储对象的名称
+   * @param mode - 存储对象的模式
+   * @returns IDBObjectStore - 返回存储对象
+   */
   getStore(storeName: string, mode: IDBTransactionMode = 'readonly') {
     if (!this.db) throw new Error('Database not initialized')
     return this.db.transaction(storeName, mode).objectStore(storeName)

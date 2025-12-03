@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react'
 import { Tabs, TabsContent } from '@/components/Tabs'
 import { useNavigate } from 'react-router-dom'
 import ReviewModal2 from '../components/ReviewModal2'
-import { vocabDB } from '@/lib/db/operations'
+import { MESSAGE } from '@/background/constants/message'
+import { WordItem } from '@/background/utils/database'
 
 const TABS = [
   {
@@ -23,15 +24,13 @@ const TABS = [
 export default function Home() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('all')
-  const [vocabularyEntries, setVocabularyEntries] = useState<any[]>(
-    []
-  )
+  const [vocabularyEntries, setVocabularyEntries] = useState<WordItem[]>([])
 
   const getAllWords = async () => {
-    const res = await vocabDB.getAllWords()
-    console.log('res', res);
-    
-    setVocabularyEntries(res)
+    const { data } = await chrome.runtime.sendMessage({
+      action: MESSAGE.GET_ALL_WORDS,
+    })
+    setVocabularyEntries(data)
   }
 
   useEffect(() => {
@@ -85,14 +84,16 @@ export default function Home() {
                 <div className="flex flex-col">
                   <div className="flex items-center gap-2">
                     <span className="text-base font-medium text-gray-900 dark:text-gray-100">
-                      {item.original}
+                      {item.originalText}
                     </span>
                   </div>
 
                   <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     <span>遇到: {item.count} 次</span>
                     <span className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
-                    <span>上次遇到: {item.lastEncounteredAt.split('T')[0]}</span>
+                    <span>
+                      上次遇到: {item.lastEncounteredAt.split('T')[0]}
+                    </span>
                   </div>
                 </div>
 

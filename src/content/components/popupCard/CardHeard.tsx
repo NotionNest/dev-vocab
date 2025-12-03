@@ -1,3 +1,4 @@
+import { MESSAGE } from '@/background/constants/message'
 import { CircleQuestionMark, Settings, X } from 'lucide-react'
 import { MouseEvent } from 'react'
 
@@ -14,6 +15,9 @@ export default function CardHeard({
   onDragStart,
   isDragging,
 }: CardHeardProps) {
+  const openOptionsPage = () => {
+    chrome.runtime.sendMessage({ action: MESSAGE.OPEN_OPTIONS_PAGE })
+  }
   return (
     <div
       className={`flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700 ${
@@ -36,9 +40,7 @@ export default function CardHeard({
           type="button"
           className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer transition"
           aria-label="Settings"
-          onClick={() => {
-            chrome.runtime.sendMessage({ action: 'openOptionsPage' })
-          }}
+          onClick={openOptionsPage}
         >
           <Settings size={16} />
         </button>

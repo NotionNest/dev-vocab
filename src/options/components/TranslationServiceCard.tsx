@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { TranslationService } from '@/lib/utils/translate'
+import { TranslationService } from '@/background/utils/translate'
 import { Button } from '@/components/ui/button'
 import { GripVertical, Settings, Trash2, CheckCircle2, XCircle } from 'lucide-react'
 import { cn } from '@/lib/utils'

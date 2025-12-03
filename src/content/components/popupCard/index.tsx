@@ -1,18 +1,17 @@
-import { WORD_POPUP_EVENT, WordPopupPayload } from '@/lib/utils/messaging'
+import { WordPopupPayload } from '@/types'
 import { useEffect, useRef, useState } from 'react'
 import { useScrollLock } from '@/hooks/useScrollLock'
 import CardHeard from './CardHeard'
 import styles from './index.css?inline'
-import { WordItem } from '@/lib/db/schema'
-import WordReview from './wordReview'
-import WordDetail from './wordDetail'
+import WordReview from './WordReview'
+import WordDetail from './WordDetail'
+import { MESSAGE } from '@/background/constants/message'
 
 export default function PopupCard2() {
   const [show, setShow] = useState(false)
   const [payload, setPayLoad] = useState<WordPopupPayload | null>(null)
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const cardRef = useRef<HTMLDivElement | null>(null)
-  const [isReviewing, setIsReviewing] = useState(false)
   // 保存初始位置，用于重新计算
   const initialPositionRef = useRef<{ x: number; y: number } | null>(null)
   // 拖动相关状态
@@ -26,8 +25,6 @@ export default function PopupCard2() {
   } | null>(null)
   const rafIdRef = useRef<number | null>(null)
   const currentPositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 })
-  const [context, setContext] = useState('')
-  const [source, setSource] = useState('')
 
   // 使用自定义 Hook 防止滚动穿透
   useScrollLock(cardRef, show)
@@ -73,8 +70,9 @@ export default function PopupCard2() {
   useEffect(() => {
     const handlePopup = async (event: Event) => {
       const detail = (event as CustomEvent<WordPopupPayload>).detail
-      setContext(detail.context || '')
-      setSource(detail.source || '')
+      if (detail.classification === 'sentence') {
+        return
+      }
 
       // 保存初始位置
       const initialPos = detail.position || { x: 0, y: 0 }
@@ -83,30 +81,20 @@ export default function PopupCard2() {
       // 先设置初始位置
       positionDetection(initialPos)
 
-      // 判断是否已经在单词本中
-      chrome.runtime.sendMessage(
-        {
-          action: 'getWordByOriginal',
-          original: detail.original,
-        },
-        (response: { success: boolean; word: WordItem | null }) => {
-          if (response.success && response.word) {
-            setIsReviewing(true)
-            setPayLoad(response.word as unknown as WordPopupPayload)
-          } else {
-            setIsReviewing(false)
-            setPayLoad(detail)
-          }
-        }
-      )
+      console.log('detail', detail)
+
+      setPayLoad(detail)
 
       setShow(true)
     }
 
-    window.addEventListener(WORD_POPUP_EVENT, handlePopup as EventListener)
+    window.addEventListener('devvocab:showPopup', handlePopup as EventListener)
 
     return () => {
-      window.removeEventListener(WORD_POPUP_EVENT, handlePopup as EventListener)
+      window.removeEventListener(
+        'devvocab:showPopup',
+        handlePopup as EventListener
+      )
     }
   }, [])
 
@@ -293,10 +281,12 @@ export default function PopupCard2() {
   useEffect(() => {
     if (!show && payload && 'id' in payload) {
       chrome.runtime.sendMessage({
-        action: 'increaseCount',
-        id: payload.id,
-        context,
-        source,
+        action: MESSAGE.INCREASE_COUNT,
+        payload: {
+          id: payload.id,
+          context: payload.context,
+          source: payload.source,
+        },
       })
     }
   }, [show])
@@ -331,7 +321,7 @@ export default function PopupCard2() {
         isDragging={isDragging}
       />
 
-      {isReviewing ? (
+      {payload?.status === 'reviewing' ? (
         <WordReview payload={payload} />
       ) : (
         <WordDetail payload={payload} closePopupCard={() => setShow(false)} />

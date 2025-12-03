@@ -1,6 +1,6 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { TranslationService } from '@/lib/utils/translate'
+import { TranslationService } from '@/background/utils/translate'
 import TranslationServiceCard from './TranslationServiceCard'
 
 interface SortableServiceCardProps {

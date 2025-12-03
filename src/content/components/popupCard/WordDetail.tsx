@@ -3,10 +3,11 @@ import { useEffect, useState } from 'react'
 import WordContext from '@/components/WordContext'
 import { CornerDownLeft, Volume2 } from 'lucide-react'
 import styles from './index.css?inline'
+import { MESSAGE } from '@/background/constants/message'
 
 export default function WordDetail({
   payload,
-  closePopupCard
+  closePopupCard,
 }: {
   payload: WordPopupPayload | null
   closePopupCard: () => void
@@ -14,7 +15,7 @@ export default function WordDetail({
   const [selectedWordLength, setSelectedWordLength] = useState(0)
 
   const addToVocabulary = () => {
-    chrome.runtime.sendMessage({ action: 'addToVocabulary', detail: payload })
+    chrome.runtime.sendMessage({ action: MESSAGE.SAVE_WORD, payload: payload })
     closePopupCard()
   }
 
@@ -22,7 +23,7 @@ export default function WordDetail({
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'Enter') return
       const canAddWord =
-        payload?.classification === 'word' && Boolean(payload?.original)
+        payload?.classification === 'word' && Boolean(payload?.originalText)
       if (!canAddWord) return
 
       event.preventDefault()
@@ -51,11 +52,11 @@ export default function WordDetail({
 
         {/* Context */}
         <div className="mt-4">
-          {payload?.context && payload?.source && payload?.original && (
+          {payload?.context && payload?.source && payload?.originalText && (
             <WordContext
               context={payload?.context}
               source={payload?.source}
-              original={payload?.original}
+              original={payload?.originalText}
             />
           )}
         </div>
@@ -66,7 +67,7 @@ export default function WordDetail({
           type="button"
           disabled={
             payload?.classification === 'word'
-              ? !payload?.text
+              ? !payload?.translatedText
               : selectedWordLength === 0
           }
           onClick={() => {
@@ -93,14 +94,14 @@ function WordContent({ payload }: { payload: WordPopupPayload }) {
     <div className="space-y-2">
       <div className="flex items-center justify-between flex-wrap">
         <p className="text-2xl font-semibold leading-tight text-gray-900 dark:text-gray-100">
-          {payload.original}
+          {payload.originalText}
         </p>
 
         <div className="flex items-center gap-2">
-          {payload.phonetic && (
+          {payload.pronunciation && (
             <>
               <div className="text-sm text-gray-500 dark:text-gray-400">
-                /{payload.phonetic}/
+                /{payload.pronunciation}/
               </div>
               <button className="text-blue-500 dark:text-blue-400 hover:text-blue-600 dark:hover:text-blue-500 cursor-pointer transition-all duration-200">
                 <Volume2 size={16} />
@@ -110,7 +111,7 @@ function WordContent({ payload }: { payload: WordPopupPayload }) {
         </div>
       </div>
 
-      <div>{payload.text}</div>
+      <div>{payload.translatedText}</div>
 
       {/* 显示词性和释义 */}
       {payload.definitions && payload.definitions.length > 0 && (
@@ -146,7 +147,7 @@ function SentenceContent({
     if (!payload) return
 
     // 提取单词并转小写，然后基于提取后的单词去重
-    const extractedWords = payload.original
+    const extractedWords = payload.originalText
       .split(' ')
       .map(item => item.match(/[a-zA-Z-]+/)?.[0]?.toLowerCase() ?? '')
       .filter(word => word.length > 0) // 过滤空字符串
@@ -178,9 +179,9 @@ function SentenceContent({
     <div className="">
       <style>{styles}</style>
       <p className="text-sm italic text-gray-400 dark:text-gray-300">
-        {payload.original}
+        {payload.originalText}
       </p>
-      <p className="text-sm text-gray-700 dark:text-gray-300">{payload.text}</p>
+      <p className="text-sm text-gray-700 dark:text-gray-300">{payload.translatedText}</p>
 
       <div>
         <p className="text-sm text-gray-400 dark:text-gray-300 my-2">

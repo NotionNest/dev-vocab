@@ -1,10 +1,7 @@
 // import { StrictMode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import App from './views/App.tsx'
-import {
-  ExtensionMessage,
-  handleRuntimeMessage,
-} from '@/lib/utils/messaging.ts'
+import { handlers } from '@/lib/utils/messaging.ts'
 import tailwindStyles from '@/assets/style/tailwind.css?inline'
 
 console.log('devvocab content script loaded')
@@ -13,12 +10,10 @@ console.log('devvocab content script loaded')
  * 监听来自 background service worker 或 popup 发送到 content script 的消息
  * 当 background 或 popup 调用 chrome.tabs.sendMessage() 时，会触发此监听器
  */
-chrome.runtime.onMessage.addListener(
-  (request: ExtensionMessage, _sender, sendResponse) => {
-    handleRuntimeMessage(request, sendResponse)
-    return true
-  }
-)
+chrome.runtime.onMessage.addListener(msg => {
+  const fn = handlers[msg.action as keyof typeof handlers]
+  if (fn) fn()
+})
 
 type ShadowWrapperElement = HTMLDivElement & {
   __devvocabRoot?: Root

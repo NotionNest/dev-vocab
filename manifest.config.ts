@@ -42,7 +42,7 @@ export default defineManifest({
   },
   host_permissions: ['http://*/*', 'https://*/*'],
   commands: {
-    'add_to_wordbook': {
+    'command_word_capture': {
       suggested_key: {
         default: 'Ctrl+Shift+Y',
         mac: 'Command+Shift+Y',

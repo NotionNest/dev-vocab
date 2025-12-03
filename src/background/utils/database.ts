@@ -1,6 +1,20 @@
-import { dbInstance } from './index'
-import { WordItem } from './schema'
+
+import { TranslationResult } from "@/types"
+import { dbInstance } from "../core/indexedDB";
 import { v4 as uuidv4 } from 'uuid'
+
+export interface WordItem extends TranslationResult {
+  id: string // 唯一标识
+  contexts: { id: string; source: string; content: string, createdAt: string }[] // 上下文
+  lastEncounteredAt: string // 最后遇到时间
+  createdAt: string // 创建时间
+  count: number // 遇到次数
+}
+
+export type DBSchema = {
+  words: WordItem
+}
+
 
 export const vocabDB = {
   async addWord(item: WordItem) {
@@ -75,7 +89,7 @@ export const dbOperations = {
   // 通过 original 获取
   async getWordByOriginal(original: string): Promise<WordItem | undefined> {
     const words = await vocabDB.getAllWords()
-    const word = words.find(word => word.original === original)
+    const word = words.find(word => word.originalText === original)
     return word
   },
 
@@ -104,3 +118,4 @@ export const dbOperations = {
     }
   },
 }
+

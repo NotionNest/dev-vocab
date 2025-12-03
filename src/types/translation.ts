@@ -1,7 +1,3 @@
-/**
- * 翻译相关类型定义
- */
-
 // ==================== 词性定义 ====================
 
 /**
@@ -74,15 +70,15 @@ export interface Definition {
  * 详细的翻译结果
  */
 export interface TranslationResult {
-  original: string // 原文
-  text: string // 翻译文本（主要翻译）
-  alternativeTranslations?: string[] // 其他可能的翻译
+  originalText: string // 原文
+  translatedText: string // 翻译文本（主要翻译）
+  pronunciation?: string // 音标
   definitions?: Definition[] // 多个释义（按词性分类）
+  alternativeTranslations?: string[] // 其他可能的翻译
+  synonyms?: string[] // 同义词
   examples?: string[] // 例句
-  phonetic?: string // 音标
   sourceLanguage?: string // 源语言
   targetLanguage?: string // 目标语言
-  synonyms?: string[] // 同义词
 }
 
 // ==================== 翻译服务定义 ====================

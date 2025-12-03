@@ -36,7 +36,7 @@ export default function WordReview({
   return (
     <div className="px-4 pb-4">
       <div className="text-center mb-4">
-        <p className="text-2xl mb-2 font-bold">{payload?.original}</p>
+        <p className="text-2xl mb-2 font-bold">{payload?.originalText}</p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           你已经遇到这个词{payload?.count}次了
         </p>

@@ -1,7 +1,13 @@
 import { ThemeContext, useThemeProvider } from '@/hooks/useTheme'
 import { Book, Moon, Settings, Sun } from 'lucide-react'
-import { ChartContainer, ChartConfig, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart'
+import {
+  ChartContainer,
+  ChartConfig,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
 import { Bar, BarChart, CartesianGrid, XAxis, Cell } from 'recharts'
+import { MESSAGE } from '@/background/constants/message'
 
 export default function App() {
   const themeValue = useThemeProvider()
@@ -9,7 +15,7 @@ export default function App() {
   const isDark = theme === 'dark'
 
   const openOptionsPage = () => {
-    chrome.runtime.sendMessage({ action: 'openOptionsPage' })
+    chrome.runtime.sendMessage({ action: MESSAGE.OPEN_OPTIONS_PAGE })
   }
 
   const chartData = [

@@ -1,6 +1,6 @@
+import { MESSAGE } from '@/background/constants/message'
+import { WordItem } from '@/background/utils/database'
 import WordContext from '@/components/WordContext'
-import { vocabDB } from '@/lib/db/operations'
-import { WordItem } from '@/lib/db/schema'
 import dayjs from 'dayjs'
 import {
   Archive,
@@ -20,16 +20,23 @@ export default function DetailWord() {
   const [currentIndex, setCurrentIndex] = useState(0)
 
   const getWordDetail = async (id: string) => {
-    const word = await vocabDB.getWordById(id)
-    if (word) {
-      setWord(word)
+    const { data } = await chrome.runtime.sendMessage({
+      action: MESSAGE.GET_WORD_BY_ID,
+      payload: { id },
+    })
+    console.log('data', data)
+    if (data) {
+      setWord(data)
     }
   }
 
   const getAllWords = async () => {
-    const res = await vocabDB.getAllWords()
+    const { data } = await chrome.runtime.sendMessage({
+      action: MESSAGE.GET_ALL_WORDS,
+    })
+    const res = data
     setVocabularyEntries(res)
-    const index = res.findIndex(item => item.id === id) + 1
+    const index = res.findIndex((item: WordItem) => item.id === id) + 1
     setCurrentIndex(index)
   }
 
@@ -75,13 +82,13 @@ export default function DetailWord() {
               size={18}
             />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {word.original}
+              {word.originalText}
             </h1>
           </div>
           <div>
-            {word.phonetic && (
+            {word.pronunciation && (
               <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-3 mt-1">
-                <span>/{word.phonetic}/</span>
+                <span>/{word.pronunciation}/</span>
                 <Volume2
                   size={16}
                   className="cursor-pointer hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
@@ -92,7 +99,7 @@ export default function DetailWord() {
         </div>
 
         <h1 className="text-lg mt-3 font-medium text-gray-900 dark:text-gray-100">
-          {word.text}
+          {word.translatedText}
         </h1>
 
         <div className="mt-2 flex flex-col">
@@ -124,7 +131,7 @@ export default function DetailWord() {
                 key={index}
                 context={context.content}
                 source={context.source}
-                original={word.original}
+                original={word.originalText}
                 createdAt={context.createdAt}
               />
             )

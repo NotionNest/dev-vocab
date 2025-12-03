@@ -2,10 +2,15 @@ import { Outlet } from 'react-router-dom'
 import { Moon, Settings, Sun } from 'lucide-react'
 import Logo from '@/components/Logo'
 import { useTheme } from '@/hooks/useTheme'
+import { MESSAGE } from '@/background/constants/message'
 
 export default function Layout() {
   const { theme, toggleTheme } = useTheme()
   const isDark = theme === 'dark'
+
+  const openOptionsPage = () => {
+    chrome.runtime.sendMessage({ action: MESSAGE.OPEN_OPTIONS_PAGE })
+  }
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-gray-900">
@@ -15,9 +20,8 @@ export default function Layout() {
         <Logo />
         <div className="flex items-center gap-4">
           <button
-            onClick={() => {
-              chrome.runtime.sendMessage({ action: 'openOptionsPage' })
-            }}
+            type="button"
+            onClick={openOptionsPage}
             className="text-gray-700 cursor-pointer dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
           >
             <Settings size={16} />
