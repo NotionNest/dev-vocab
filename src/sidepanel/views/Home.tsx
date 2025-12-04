@@ -1,10 +1,10 @@
-import { ChevronRight, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Tabs, TabsContent } from '@/components/Tabs'
-import { useNavigate } from 'react-router-dom'
 import ReviewModal2 from '../components/ReviewModal2'
 import { MESSAGE } from '@/background/constants/message'
 import { WordItem } from '@/background/utils/database'
+import WordListItem from '../components/WordListItem'
 
 const TABS = [
   {
@@ -22,7 +22,6 @@ const TABS = [
 ] as const
 
 export default function Home() {
-  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]['id']>('all')
   const [vocabularyEntries, setVocabularyEntries] = useState<WordItem[]>([])
 
@@ -30,6 +29,8 @@ export default function Home() {
     const { data } = await chrome.runtime.sendMessage({
       action: MESSAGE.GET_ALL_WORDS,
     })
+    console.log('data', data)
+    
     setVocabularyEntries(data)
   }
 
@@ -37,8 +38,7 @@ export default function Home() {
     getAllWords()
 
     chrome.runtime.onMessage.addListener(message => {
-      if (message.action === 'updateVocabulary') {
-        console.log('updateVocabulary')
+      if (message.action === 'UPDATE_VOCABULARY') {
         getAllWords()
       }
     })
@@ -52,7 +52,7 @@ export default function Home() {
     <div className="relative h-full bg-white dark:bg-gray-900">
       <div className="flex flex-col h-full">
         {/* 验证记忆 */}
-        <ReviewModal2 />
+        <ReviewModal2 getAllWords={getAllWords} />
 
         {/* search input */}
         <div className="px-4 mt-3 relative shrink-0">
@@ -76,46 +76,34 @@ export default function Home() {
         <div className="px-4 mt-3 flex-1 overflow-y-auto">
           <TabsContent value="all" activeId={activeTab}>
             {vocabularyEntries.map(item => (
-              <div
-                key={item.id}
-                className="flex group items-center justify-between gap-5 hover:border-gray-200 dark:hover:border-gray-700 border border-transparent rounded-md py-3 px-2 cursor-pointer transition-colors"
-                onClick={() => navigate(`/detail-word/${item.id}`)}
-              >
-                <div className="flex flex-col">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-medium text-gray-900 dark:text-gray-100">
-                      {item.originalText}
-                    </span>
-                  </div>
-
-                  <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                    <span>遇到: {item.count} 次</span>
-                    <span className="w-1 h-1 bg-gray-300 dark:bg-gray-600 rounded-full"></span>
-                    <span>
-                      上次遇到: {item.lastEncounteredAt.split('T')[0]}
-                    </span>
-                  </div>
-                </div>
-
-                {/* status */}
-                <div className="items-center gap-2 hidden group-hover:flex text-gray-700 dark:text-gray-300">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                  <ChevronRight size={16} />
-                </div>
-              </div>
+              <WordListItem key={item.id} word={item} />
             ))}
           </TabsContent>
 
-          <TabsContent value="not-mastered" activeId={activeTab}>
-            <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
-              Not Mastered Content
-            </div>
+          <TabsContent value="learning" activeId={activeTab}>
+            {vocabularyEntries.filter(item => item.state !== 'mastered')
+              .length === 0 ? (
+              <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
+                No not mastered words
+              </div>
+            ) : (
+              vocabularyEntries
+                .filter(item => item.state !== 'mastered')
+                .map(item => <WordListItem key={item.id} word={item} />)
+            )}
           </TabsContent>
 
           <TabsContent value="mastered" activeId={activeTab}>
-            <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
-              Mastered Content
-            </div>
+            {vocabularyEntries.filter(item => item.state === 'mastered')
+              .length === 0 ? (
+              <div className="text-center text-gray-500 dark:text-gray-400 mt-10">
+                No mastered words
+              </div>
+            ) : (
+              vocabularyEntries
+                .filter(item => item.state === 'mastered')
+                .map(item => <WordListItem key={item.id} word={item} />)
+            )}
           </TabsContent>
         </div>
       </div>

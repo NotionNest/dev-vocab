@@ -1,7 +1,7 @@
-import { classifySelection } from './word'
+import { classifySelection } from '../lib/utils/word'
 import type { WordPopupPayload } from '@/types/messaging'
-import { TranslationResult } from '../../background/utils/translate'
-import { getContextFromSelection } from './word'
+import { TranslationResult } from '@/types/translation'
+import { getContextFromSelection } from '../lib/utils/word'
 import { MESSAGE } from '@/background/constants/message'
 
 /**
@@ -55,7 +55,6 @@ export const handlers = {
       })
 
       console.log('localWord', localWord)
-
       if (localWord.ok && localWord.data) {
         dispatchPopupEvent({
           status: 'reviewing',

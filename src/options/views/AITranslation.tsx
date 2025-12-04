@@ -4,7 +4,8 @@ import SettingCard from '../components/SettingCard'
 import SortableServiceCard from '../components/SortableServiceCard'
 import ServiceConfigDialog from '../components/ServiceConfigDialog'
 import { Button } from '@/components/ui/button'
-import { TranslationService, testTranslationService } from '@/background/utils/translate'
+import { testTranslationService } from '@/background/utils/translate'
+import { TranslationService } from '@/types/translation'
 import {
   getTranslationServices,
   updateTranslationService,

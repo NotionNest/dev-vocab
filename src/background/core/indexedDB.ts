@@ -26,8 +26,9 @@ export class DB {
         if (!db.objectStoreNames.contains('vocabs')) {
           const store = db.createObjectStore('vocabs', { keyPath: 'id' })
           // 创建索引
-          store.createIndex('text', 'text', { unique: false })
           store.createIndex('createdAt', 'createdAt', { unique: false })
+          store.createIndex('originalText', 'originalText', { unique: false })
+          store.createIndex('nextReviewAt', 'nextReviewAt', { unique: false })
         }
       }
     })

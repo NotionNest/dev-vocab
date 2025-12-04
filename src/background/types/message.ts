@@ -10,6 +10,8 @@ export type MessagePayloadMap = {
   [MESSAGE.SAVE_WORD]: WordPopupPayload
   [MESSAGE.GET_ALL_WORDS]: void
   [MESSAGE.GET_WORD_BY_ID]: { id: string }
+  [MESSAGE.APPLY_REVIEW_ACTION]: { id: string, result: 'correct' | 'incorrect' }
+  [MESSAGE.GET_WORDS_DUE_FOR_REVIEW]: void
 }
 
 /**

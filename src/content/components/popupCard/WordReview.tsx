@@ -1,3 +1,4 @@
+import { WordItem } from '@/background/utils/database'
 import { Button } from '@/components/ui/button'
 import { WordPopupPayload } from '@/types'
 import { CornerDownLeft } from 'lucide-react'
@@ -32,6 +33,18 @@ export default function WordReview({
       window.removeEventListener('keydown', handleKeyDown)
     }
   }, [payload, checkText])
+
+  const handleApplyReviewAction = async (result: 'correct' | 'incorrect') => {
+    const id = (payload as unknown as WordItem).id
+    console.log('id', id, result)
+    // const { ok } = await chrome.runtime.sendMessage({
+    //   action: MESSAGE.APPLY_REVIEW_ACTION,
+    //   payload: { id, result },
+    // })
+    // if (ok) {
+    //   setIsShowMeaning(false)
+    // }
+  }
 
   return (
     <div className="px-4 pb-4">
@@ -93,12 +106,14 @@ export default function WordReview({
         <Button
           className="flex-1 cursor-pointer text-red-500 dark:text-red-400 border-red-500 dark:border-red-600 hover:bg-red-500/10 dark:hover:bg-red-600/20 hover:text-red-500 dark:hover:text-red-400"
           variant="outline"
+          onClick={() => handleApplyReviewAction('incorrect')}
         >
           Forgotten
         </Button>
         <Button
           className="flex-1 cursor-pointer text-white bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-500/90 dark:hover:bg-emerald-600/90"
           variant="default"
+          onClick={() => handleApplyReviewAction('correct')}
         >
           Got it
         </Button>

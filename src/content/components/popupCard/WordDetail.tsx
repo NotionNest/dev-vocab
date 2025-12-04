@@ -15,7 +15,8 @@ export default function WordDetail({
   const [selectedWordLength, setSelectedWordLength] = useState(0)
 
   const addToVocabulary = () => {
-    chrome.runtime.sendMessage({ action: MESSAGE.SAVE_WORD, payload: payload })
+    const {classification, position, status, ...rest}  = payload ?? {}
+    chrome.runtime.sendMessage({ action: MESSAGE.SAVE_WORD, payload: rest })
     closePopupCard()
   }
 

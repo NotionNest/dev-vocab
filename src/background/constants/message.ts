@@ -49,4 +49,16 @@ export const MESSAGE = {
    * 当用户增加单词统计时触发此消息
    */
   INCREASE_COUNT: 'INCREASE_COUNT',
+
+  /**
+   * 应用复习动作消息
+   * 当用户应用复习动作时触发此消息
+   */
+  APPLY_REVIEW_ACTION: 'APPLY_REVIEW_ACTION',
+
+  /**
+   * 获取所有应该复习的单词消息
+   * 用于从本地数据库查询所有应该复习的单词信息
+   */
+  GET_WORDS_DUE_FOR_REVIEW: 'GET_WORDS_DUE_FOR_REVIEW',
 } as const

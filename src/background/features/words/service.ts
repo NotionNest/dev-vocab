@@ -5,14 +5,22 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 import { WordPopupPayload } from '@/types'
 import { vocabDB, dbOperations } from '@/background/utils/database'
+import { reviewPlan, updateMemory } from '@/background/utils/memoryState'
 
 export async function saveWord(word: WordPopupPayload) {
   try {
+    const now = Date.now()
+
     await vocabDB.addWord({
       id: uuidv4(),
       count: 1,
-      lastEncounteredAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
+      lastEncounteredAt: now,
+      createdAt: now,
+
+      state: 'learning',
+      nextReviewAt: now + reviewPlan.learning.interval, // 当前时间（立即可学习）
+      interval: reviewPlan.new.interval,
+      history: [],
       ...word,
       contexts: [
         {
@@ -26,7 +34,7 @@ export async function saveWord(word: WordPopupPayload) {
         },
       ],
     })
-    // chrome.runtime.sendMessage({ action: 'updateVocabulary' })
+    chrome.runtime.sendMessage({ action: 'UPDATE_VOCABULARY' })
     return { ok: true }
     // 通知侧边栏触发更新
   } catch (error) {
@@ -65,7 +73,48 @@ export async function increaseCount(
   return { ok: true }
 }
 
-
 export async function getAllWords() {
   return await vocabDB.getAllWords()
+}
+
+export async function applyReviewAction(payload: {
+  id: string
+  result: 'correct' | 'incorrect'
+}) {
+  const { id, result } = payload
+  const word = await vocabDB.getWordById(id)
+  if (!word) return { ok: false, error: 'Word not found' }
+
+  const newState = updateMemory(word.state, result)
+
+  await vocabDB.updateWord(id, {
+    state: newState,
+    nextReviewAt: Date.now() + reviewPlan[newState].interval,
+    interval: reviewPlan[newState].interval,
+    history: [
+      ...word.history,
+      {
+        timestamp: Date.now(),
+        result,
+        fromState: word.state,
+        toState: newState,
+      },
+    ],
+  })
+
+  return { ok: true }
+}
+
+/**
+ * 获取所有应该复习的单词
+ * @returns {Promise<WordItem[]>} 应该复习的单词列表
+ */
+export async function getWordsDueForReview() {
+  const words = await vocabDB.getAllWords()
+  const now = Date.now()
+
+  const wordsDueForReview = words.filter(word => {
+    return word.nextReviewAt <= now
+  })
+  return wordsDueForReview
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { TranslationService, TranslationServiceType, TranslationProviderId } from '@/background/utils/translate'
+import { TranslationService, TranslationServiceType, TranslationProviderId } from '@/types/translation'
 import {
   Dialog,
   DialogContent,

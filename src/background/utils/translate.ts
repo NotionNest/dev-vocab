@@ -5,27 +5,9 @@ import {
   TranslationProviderId,
   TranslationService,
   TranslationResult,
-  Definition,
   APIConfig,
   PartOfSpeech,
-  PART_OF_SPEECH_NAMES,
-  getPartOfSpeechName,
 } from '@/types/translation'
-
-// 重新导出供外部使用
-export type {
-  TranslationService,
-  TranslationResult,
-  Definition,
-  APIConfig,
-}
-export {
-  TranslationServiceType,
-  TranslationProviderId,
-  PartOfSpeech,
-  PART_OF_SPEECH_NAMES,
-  getPartOfSpeechName,
-}
 
 // ==================== 词性标准化工具 ====================
 

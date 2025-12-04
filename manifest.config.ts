@@ -30,26 +30,29 @@ export default defineManifest({
     'activeTab',
     'storage',
     'tabs',
-    'contextMenus',
     'scripting',
+    'alarms',
+    'notifications'
   ],
-  content_scripts: [{
-    js: ['src/content/main.tsx'],
-    matches: ['https://*/*', 'http://*/*'],
-  }],
+  content_scripts: [
+    {
+      js: ['src/content/main.tsx'],
+      matches: ['https://*/*', 'http://*/*'],
+    },
+  ],
   side_panel: {
     default_path: 'src/sidepanel/index.html',
   },
   host_permissions: ['http://*/*', 'https://*/*'],
   commands: {
-    'command_word_capture': {
+    command_word_capture: {
       suggested_key: {
         default: 'Ctrl+Shift+Y',
         mac: 'Command+Shift+Y',
       },
       description: '将选定的单词添加到单词本',
     },
-    'toggle_sidepanel': {
+    toggle_sidepanel: {
       suggested_key: {
         default: 'Ctrl+Shift+L',
         mac: 'Command+Shift+L',
