@@ -4,7 +4,11 @@ import {
 } from '@/background/utils/translate'
 import { v4 as uuidv4 } from 'uuid'
 import { WordPopupPayload } from '@/types'
-import { vocabDB, dbOperations } from '@/background/utils/database'
+import {
+  vocabDB,
+  dbOperations,
+  WordItem,
+} from '@/background/utils/database'
 import { reviewPlan, updateMemory } from '@/background/utils/memoryState'
 
 export async function saveWord(word: WordPopupPayload) {
@@ -117,4 +121,33 @@ export async function getWordsDueForReview() {
     return word.nextReviewAt <= now
   })
   return wordsDueForReview
+}
+
+/**
+ * 导入单词到数据库
+ * @param word 要导入的单词数据
+ */
+export async function importWord(word: WordItem) {
+  try {
+    await vocabDB.addWord(word)
+    return { ok: true }
+  } catch (error) {
+    console.error('导入单词失败:', error)
+    return { ok: false, error: (error as Error).message }
+  }
+}
+
+/**
+ * 清除所有单词数据
+ */
+export async function clearAllWords() {
+  try {
+    await vocabDB.clearAllWords()
+    // 通知侧边栏触发更新
+    chrome.runtime.sendMessage({ action: 'UPDATE_VOCABULARY' })
+    return { ok: true }
+  } catch (error) {
+    console.error('清除所有单词失败:', error)
+    return { ok: false, error: (error as Error).message }
+  }
 }

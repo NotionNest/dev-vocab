@@ -1,10 +1,12 @@
 import { MESSAGE } from '@/background/constants/message'
 import {
   applyReviewAction,
+  clearAllWords,
   getAllWords,
   getWordById,
   getWordByOriginal,
   getWordsDueForReview,
+  importWord,
   increaseCount,
   saveWord,
   translate,
@@ -54,5 +56,18 @@ export function registerWordController() {
 
   registerHandler(MESSAGE.GET_WORDS_DUE_FOR_REVIEW, () => {
     return getWordsDueForReview()
+  })
+
+  registerHandler(MESSAGE.IMPORT_WORD as any, async (payload: any) => {
+    const result = await importWord(payload)
+    if (result.ok) {
+      // 通知侧边栏触发更新
+      chrome.runtime.sendMessage({ action: 'UPDATE_VOCABULARY' })
+    }
+    return result
+  })
+
+  registerHandler(MESSAGE.CLEAR_ALL_WORDS as any, () => {
+    return clearAllWords()
   })
 }

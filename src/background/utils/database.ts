@@ -88,6 +88,17 @@ export const vocabDB = {
       req.onerror = () => reject(req.error)
     })
   },
+
+  async clearAllWords() {
+    const db = await dbInstance.open()
+    const store = db.transaction('vocabs', 'readwrite').objectStore('vocabs')
+
+    return new Promise((resolve, reject) => {
+      const req = store.clear()
+      req.onsuccess = () => resolve(req.result)
+      req.onerror = () => reject(req.error)
+    })
+  },
 }
 
 export const dbOperations = {

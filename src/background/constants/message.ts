@@ -61,4 +61,16 @@ export const MESSAGE = {
    * 用于从本地数据库查询所有应该复习的单词信息
    */
   GET_WORDS_DUE_FOR_REVIEW: 'GET_WORDS_DUE_FOR_REVIEW',
+
+  /**
+   * 导入单词消息
+   * 用于批量导入单词到数据库
+   */
+  IMPORT_WORD: 'IMPORT_WORD',
+
+  /**
+   * 清除所有单词消息
+   * 用于删除所有单词和统计数据
+   */
+  CLEAR_ALL_WORDS: 'CLEAR_ALL_WORDS',
 } as const

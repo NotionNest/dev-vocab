@@ -278,6 +278,24 @@ export default function PopupCard2() {
     }
   }, [show, isDragging])
 
+  // 按下 ESC 键关闭弹窗
+  useEffect(() => {
+    if (!show) {
+      return
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShow(false)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [show])
+
   useEffect(() => {
     if (!show && payload && 'id' in payload) {
       chrome.runtime.sendMessage({
@@ -322,7 +340,7 @@ export default function PopupCard2() {
       />
 
       {payload?.status === 'reviewing' ? (
-        <WordReview payload={payload} />
+        <WordReview payload={payload} closePopupCard={() => setShow(false)} />
       ) : (
         <WordDetail payload={payload} closePopupCard={() => setShow(false)} />
       )}

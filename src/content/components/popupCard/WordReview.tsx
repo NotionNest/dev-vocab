@@ -1,3 +1,4 @@
+import { MESSAGE } from '@/background/constants/message'
 import { WordItem } from '@/background/utils/database'
 import { Button } from '@/components/ui/button'
 import { WordPopupPayload } from '@/types'
@@ -6,8 +7,10 @@ import { useEffect, useState } from 'react'
 
 export default function WordReview({
   payload,
+  closePopupCard,
 }: {
   payload: WordPopupPayload | null
+  closePopupCard: () => void
 }) {
   const [checkText, setCheckText] = useState('')
   const [isShowMeaning, setIsShowMeaning] = useState(false)
@@ -37,13 +40,16 @@ export default function WordReview({
   const handleApplyReviewAction = async (result: 'correct' | 'incorrect') => {
     const id = (payload as unknown as WordItem).id
     console.log('id', id, result)
-    // const { ok } = await chrome.runtime.sendMessage({
-    //   action: MESSAGE.APPLY_REVIEW_ACTION,
-    //   payload: { id, result },
-    // })
-    // if (ok) {
-    //   setIsShowMeaning(false)
-    // }
+    const { ok } = await chrome.runtime.sendMessage({
+      action: MESSAGE.APPLY_REVIEW_ACTION,
+      payload: { id, result },
+    })
+    console.log('ok', ok)
+
+    if (ok) {
+      setIsShowMeaning(false)
+      closePopupCard()
+    }
   }
 
   return (
@@ -108,15 +114,17 @@ export default function WordReview({
           variant="outline"
           onClick={() => handleApplyReviewAction('incorrect')}
         >
-          Forgotten
+          忘记了
         </Button>
-        <Button
-          className="flex-1 cursor-pointer text-white bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-500/90 dark:hover:bg-emerald-600/90"
-          variant="default"
-          onClick={() => handleApplyReviewAction('correct')}
-        >
-          Got it
-        </Button>
+        {!isShowMeaning && (
+          <Button
+            className="flex-1 cursor-pointer text-white bg-emerald-500 dark:bg-emerald-600 hover:bg-emerald-500/90 dark:hover:bg-emerald-600/90"
+            variant="default"
+            onClick={() => handleApplyReviewAction('correct')}
+          >
+            记得
+          </Button>
+        )}
       </div>
     </div>
   )

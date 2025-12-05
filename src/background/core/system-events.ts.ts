@@ -169,5 +169,7 @@ export function registerSystemEvents() {
   chrome.notifications.onClicked.addListener(notificationId => {
     console.log('notification clicked', notificationId)
     currentWindowId && chrome.sidePanel.open({ windowId: currentWindowId })
+    // 关闭通知
+    chrome.notifications.clear(notificationId)
   })
 }

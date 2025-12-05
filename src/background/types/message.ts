@@ -1,4 +1,5 @@
 import { WordPopupPayload } from '@/types'
+import { WordItem } from '../utils/database'
 import { MESSAGE } from '../constants/message'
 
 export type MessagePayloadMap = {
@@ -12,6 +13,8 @@ export type MessagePayloadMap = {
   [MESSAGE.GET_WORD_BY_ID]: { id: string }
   [MESSAGE.APPLY_REVIEW_ACTION]: { id: string, result: 'correct' | 'incorrect' }
   [MESSAGE.GET_WORDS_DUE_FOR_REVIEW]: void
+  [MESSAGE.IMPORT_WORD]: WordItem
+  [MESSAGE.CLEAR_ALL_WORDS]: void
 }
 
 /**
