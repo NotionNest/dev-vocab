@@ -29,8 +29,7 @@ export default function Home() {
     const { data } = await chrome.runtime.sendMessage({
       action: MESSAGE.GET_ALL_WORDS,
     })
-    console.log('data', data)
-    
+
     setVocabularyEntries(data)
   }
 

@@ -1,10 +1,10 @@
-import { WordItem } from "@/background/utils/database"
-import { MemoryStateColor } from "@/background/utils/memoryState"
-import dayjs from "dayjs"
-import { ChevronRight } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { WordItem } from '@/background/utils/database'
+import { MemoryStatePresent } from '@/background/utils/memoryState'
+import dayjs from 'dayjs'
+import { ChevronRight } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
-export default function WordListItem({word}: {word: WordItem}) {
+export default function WordListItem({ word }: { word: WordItem }) {
   const navigate = useNavigate()
 
   return (
@@ -30,9 +30,9 @@ export default function WordListItem({word}: {word: WordItem}) {
       </div>
 
       {/* status */}
-      <div className="items-center gap-2 hidden group-hover:flex text-gray-700 dark:text-gray-300">
-        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: MemoryStateColor[word.state] }}></div>
-        <ChevronRight size={16} />
+      <div className="items-center gap-2 flex text-gray-700 dark:text-gray-300">
+        <div className="">{MemoryStatePresent[word.state].icon}</div>
+        <ChevronRight className="hidden group-hover:block" size={16} />
       </div>
     </div>
   )

@@ -1,14 +1,9 @@
 import { MESSAGE } from '@/background/constants/message'
 import { WordItem } from '@/background/utils/database'
+import { MemoryStatePresent } from '@/background/utils/memoryState'
 import WordContext from '@/components/WordContext'
 import dayjs from 'dayjs'
-import {
-  Archive,
-  ArrowLeft,
-  ArrowRight,
-  Clock8,
-  Volume2,
-} from 'lucide-react'
+import { ArrowLeft, ArrowRight, Volume2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
@@ -74,28 +69,27 @@ export default function DetailWord() {
   return (
     <div className="scroll-smoothbar py-2 h-full flex flex-col bg-white dark:bg-gray-900">
       <div className="flex-1 overflow-y-auto px-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <ArrowLeft
-              className="cursor-pointer text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
-              onClick={() => navigate('/')}
-              size={18}
-            />
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-              {word.originalText}
-            </h1>
-          </div>
-          <div>
-            {word.pronunciation && (
-              <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-3 mt-1">
-                <span>/{word.pronunciation}/</span>
-                <Volume2
-                  size={16}
-                  className="cursor-pointer hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
-                />
-              </div>
-            )}
-          </div>
+        {/* 单词信息 */}
+        <div className="flex items-center gap-3">
+          <ArrowLeft
+            className="cursor-pointer text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+            onClick={() => navigate('/')}
+            size={18}
+          />
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {word.originalText}
+          </h1>
+        </div>
+        <div>
+          {word.pronunciation && (
+            <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-3 mt-1">
+              <span>/{word.pronunciation}/</span>
+              <Volume2
+                size={16}
+                className="cursor-pointer hover:text-sky-500 dark:hover:text-sky-400 transition-colors"
+              />
+            </div>
+          )}
         </div>
 
         <h1 className="text-lg mt-3 font-medium text-gray-900 dark:text-gray-100">
@@ -137,6 +131,48 @@ export default function DetailWord() {
             )
           })}
         </div>
+
+        {/* 记忆状态区 */}
+        <div className="mt-4">
+          {/* 当前记忆状态 */}
+          <div>
+            ⏰状态: {MemoryStatePresent[word.state].label}
+            {MemoryStatePresent[word.state].icon}
+          </div>
+          <div>
+            下次复习时间: {dayjs(word.nextReviewAt).format('YYYY/MM/DD')} 前复习
+          </div>
+          {/* 熟悉度评分 */}
+        </div>
+
+        {/* 复习历史区 */}
+        <div className="mt-4">{/* 时间轴 */}</div>
+
+        {/* 统计区 */}
+        {/* 熟悉度评分 */}
+        {/* 第一次见面到现在 */}
+        {/* 忘记次数 */}
+
+        {/* 联想区 */}
+        {/* 单词的词根词缀解析
+            近义词
+            反义词
+            同族词（derive, derivation, derivative…）
+            常见搭配 collocations */}
+
+        {/* Metadata 信息 */}
+        {/* createdAt（加入单词本时间）
+            lastReviewedAt（上次复习时间）
+            totalReviewCount
+            difficulty（算法内部 difficulty 因子，如 SM-2 的 EF） */}
+
+        {/* 操作区（功能入口） */}
+        {/* 编辑单词
+            删除单词
+            手动触发复习
+            标记为已掌握
+            重置记忆（重新开始） */}
+
         <div className="text-xs text-gray-500 dark:text-gray-400 mt-10">
           添加时间: {dayjs(word.createdAt).format('YYYY/MM/DD')}
         </div>
@@ -172,7 +208,7 @@ export default function DetailWord() {
 
       {/* footer */}
       <div className="px-4">
-        <div className="flex items-center justify-between gap-2 border-t border-gray-200 dark:border-gray-700 pt-4">
+        {/* <div className="flex items-center justify-between gap-2 border-t border-gray-200 dark:border-gray-700 pt-4">
           <div className="flex flex-1 items-center justify-between gap-2">
             <button className="cursor-pointer w-full rounded-md py-2 border border-blue-500 dark:border-blue-600 bg-blue-500/10 dark:bg-blue-600/20 text-blue-500 dark:text-blue-400 flex items-center justify-center gap-2 hover:bg-blue-500/20 dark:hover:bg-blue-600/30 transition-colors">
               <Clock8 size={16} />
@@ -183,7 +219,7 @@ export default function DetailWord() {
               <span>标记为掌握</span>
             </button>
           </div>
-        </div>
+        </div> */}
         <div className="text-center mt-2 text-xs text-gray-500 dark:text-gray-400">
           遇到: {word.count} 次 • 上次遇到:{' '}
           {dayjs(word.lastEncounteredAt).format('YYYY/MM/DD')}

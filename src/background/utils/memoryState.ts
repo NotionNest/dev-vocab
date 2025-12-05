@@ -15,6 +15,39 @@ export const MemoryStateColor: Record<MemoryState, string> = {
   mastered: '#10B981', // 绿色，掌握
 }
 
+export const MemoryStatePresent = {
+  new: {
+    icon: '🌱',
+    color: '#9CA3AF',
+    label: '新词',
+  },
+  learning: {
+    icon: '🌿',
+    color: '#3B82F6',
+    label: '初识',
+  },
+  review1: {
+    icon: '🍃',
+    color: '#F59E0B',
+    label: '巩固1',
+  },
+  review2: {
+    icon: '🌳',
+    color: '#D97706',
+    label: '巩固2',
+  },
+  review3: {
+    icon: '🌲',
+    color: '#B45309',
+    label: '巩固3',
+  },
+  mastered: {
+    icon: '🌺',
+    color: '#10B981',
+    label: '已掌握',
+  },
+} as const
+
 export const reviewPlan = {
   new: { next: 'learning', interval: 0 },
   learning: { next: 'review1', interval: 10 * 60 * 1000 }, // 10min
